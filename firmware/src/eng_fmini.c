@@ -292,6 +292,19 @@ static inline int32_t fmini_shark(uint32_t ph)            /* a triangle that ris
     return x < 49152u ? (int32_t)((x * 43691u) >> 15) - 32768 : 32767 - (int32_t)((x - 49152u) * 4u);
 }
 
+/* the ladder's input is the mixer's sum halved (6 dB below full scale) and its output raised by the same: the
+ * CA-72's ladder runs well under its pairs' knee, so a sawtooth or triangle comes out as drawn (its 3rd harmonic
+ * at -20 dB in the triangle, measured on the CA-72 oscillator through the open ladder), while the singing sits at
+ * the CA-72's level against the waveform. Harmonics relative to the fundamental; a shift, not a gain change. */
+#define FMINI_LADDER_IN 2         /* 12 dB below full scale: the ladder stays under its knee at every oscillator level */
+/* the differential pair: tanh with its bias, the bias's own offset taken away (the CA-72's pairs sit on a bias; its 2nd
+ * harmonic at full level is -37 dB, the triangle's odd harmonics unchanged). pair_off = softclip(FMINI_PAIR_BIAS), once a block */
+#define FMINI_PAIR_BIAS 1500
+static inline int32_t pairb(int32_t x, int32_t pair_off)
+{
+    return softclip(x + FMINI_PAIR_BIAS) - pair_off;
+}
+
 /* one oscillator of the mix: mix[i] += its sample at level g (Q15); a loop per wave. keep = -1 adds to what the mix
  * holds; keep = 0 writes it (the first oscillator: no zeroing pass, 0 + x = x exactly).
  * The polyBLEP residual is zero except within one step of a wrap: its bounds (lo, hi) and the step d are
@@ -432,7 +445,7 @@ static inline int32_t fmini_mulr(int32_t a, uint32_t k)
  * processed). The lag pole puts the loop's 180-degree point at 0.686 of the stage pole: the filter sings at 1.578 times
  * its -3 dB corner, and it sings when the feedback k reaches 2.92. The knobs and the pitch work in 1/16 semitones of the
  * singing pitch (MIDI x 16): CUTOFF is the dial -5 .. +5 (FMINI_CUT), the keyboard adds 1 V/oct from F (MIDI 41) at KBD 127,
- * the contour up to 5 octaves; EMPHASIS is the dial 0 .. 10 (FMINI_K) with the hardware's passband loss (FMINI_TRIM). With
+ * the contour up to 6.3 octaves through the CA-72's AMOUNT taper (FMINI_CNTR); EMPHASIS is the dial 0 .. 10 (FMINI_K) with the hardware's passband loss (FMINI_TRIM). With
  * the mixer silent and EMPHASIS past 8 the ladder sings a sine at the singing pitch, 1 V/oct over the keyboard.
  * Q formats: signals +-32768 (tanh(1)); the states Q8 (a quiet ladder at a low cutoff moves less than a LSB a sample); G Q16; the prediction's coefficients c Q14; k Q12. */
 static void fmini_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const vmod_t *m)
@@ -440,7 +453,7 @@ static void fmini_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const
     const int16_t *p = t->p;
     const uint8_t *g = fmini_eff[(uint32_t)(t - trk) % NTRK].p;
     int32_t mix[CTL];
-    int32_t env15, mod, lfo, vib, lc, p16, fine, k12, G16, gx16, c0, c1, c2, c3, inv14, kinv12, trim12;
+    int32_t env15, mod, lfo, vib, lc, p16, fine, k12, G16, gx16, c0, c1, c2, c3, inv14, kinv12, trim12, pair_off;
     int32_t l1 = 0, l2 = 0, l3 = 0, ln = 0, dr1, dr2, dr3;
     uint32_t hp = (uint32_t)(g[FG_SW2] & FT_HP) ? 1u : 0u;      /* the output: LP (the last stage) or HP ((1 - LP)^4 of the same stages) */
     uint32_t tr = (uint32_t)(t - trk) % NTRK, i, sw = g[FG_SW1];
@@ -515,7 +528,13 @@ static void fmini_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const
             lc += ((FMINI_CUT[i0 + 1] - lc) * fr) >> 8;
     }
     lc += (m->cutoff * 55) >> 10;                                                                           /* the host's steps (1/14 octave) in 1/16 semitones */
-    lc += (int32_t)(((int64_t)env15 * fmini_sm[tr][2] / (127 * 65536)) * 960) >> 15;                          /* the contour: up to 5 octaves */
+    {                                                                                                           /* the contour: the CA-72's taper, up to 6.3 octaves */
+        uint32_t ci = (uint32_t)fmini_sm[tr][2] >> 16, cf = ((uint32_t)fmini_sm[tr][2] & 0xFFFFu) >> 1;
+        int32_t ctap;
+        if (ci > 126u) { ci = 126u; cf = 32768u; }
+        ctap = (int32_t)FMINI_CNTR[ci] + (int32_t)((((int32_t)FMINI_CNTR[ci + 1u] - (int32_t)FMINI_CNTR[ci]) * (int32_t)cf) >> 15);
+        lc += (int32_t)(((int64_t)env15 * ctap * FMINI_CNTR_FULL16) >> 30);
+    }
     lc += ((v->pitch_cur - FMINI_NOTE0 * 16) * (int32_t)g[FG_KBD] * 516) >> 16;                              /* the keyboard: 1 V/oct at 127, 0 V on F */
     if (sw & FS_MFLT)
         lc += (mod * 547) >> 15;                                                                            /* +-2.85 octaves at full depth */
@@ -550,22 +569,23 @@ static void fmini_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const
 
     const int32_t amp0 = m->amp0;                      /* the voice's ramp (voice_amp), as a running sum below */
     uint32_t xa = 0, da = (uint32_t)(m->amp1 - m->amp0);
+    pair_off = softclip(FMINI_PAIR_BIAS);
     for (i = 0; i < n; i++) {
-        int32_t x = softclip(mix[i]), S, fbc, u, xin, v1, v2, v3, v4, y1, y2, y3, y4, w, o;   /* the mixer overloads softly */
+        int32_t x = (mix[i] > (32767 << FMINI_LADDER_IN) ? (32767 << FMINI_LADDER_IN) : mix[i] < -(32767 << FMINI_LADDER_IN) ? -(32767 << FMINI_LADDER_IN) : mix[i]) >> FMINI_LADDER_IN, S, fbc, u, xin, v1, v2, v3, v4, y1, y2, y3, y4, w, o;   /* the mixer is linear (the CA-72's is) up to 12 dB over full scale, then clips hard: the shift is its headroom */
         S = (c0 * ((s0 + 128) >> 8) + c1 * ((s1 + 128) >> 8) + c2 * ((s2 + 128) >> 8) + c3 * ((s3 + 128) >> 8)) >> 14;   /* what the stages already hold */
         fbc = sx + fmini_mulr((S << 8) - sx, (uint32_t)gx16);              /* through the lag pole (Q8) */
         u = ((x * inv14) >> 14) - ((kinv12 * ((fbc + 128) >> 8)) >> 12);  /* the input less the feedback, the loop solved */
-        xin = softclip(u) << 8;                                              /* the first stage's input (Q8) */
+        xin = (pairb(u, pair_off)) << 8;                                              /* the first stage's input (Q8) */
         v1 = fmini_mulr(xin - s0, (uint32_t)G16);                          /* each stage is a differential pair: tanh in front of it */
         y1 = v1 + s0;
         s0 = y1 + v1;
-        v2 = fmini_mulr((softclip((y1 + 128) >> 8) << 8) - s1, (uint32_t)G16);
+        v2 = fmini_mulr((pairb((y1 + 128) >> 8, pair_off) << 8) - s1, (uint32_t)G16);
         y2 = v2 + s1;
         s1 = y2 + v2;
-        v3 = fmini_mulr((softclip((y2 + 128) >> 8) << 8) - s2, (uint32_t)G16);
+        v3 = fmini_mulr((pairb((y2 + 128) >> 8, pair_off) << 8) - s2, (uint32_t)G16);
         y3 = v3 + s2;
         s2 = y3 + v3;
-        v4 = fmini_mulr((softclip((y3 + 128) >> 8) << 8) - s3, (uint32_t)G16);
+        v4 = fmini_mulr((pairb((y3 + 128) >> 8, pair_off) << 8) - s3, (uint32_t)G16);
         y4 = v4 + s3;
         s3 = y4 + v4;
         w = fmini_mulr(y4 - sx, (uint32_t)gx16);                           /* the lag pole follows the output */
@@ -575,7 +595,7 @@ static void fmini_render(track_t *t, voice_t *v, int32_t *out, uint32_t n, const
         {   /* voice_amp with amp_at's ramp by its running sum (x = (amp1 - amp0) * i, one add a sample, mod 2^32 as the product) */
             int32_t xr = (int32_t)xa, amp = amp0 + ((xr + ((xr >> 31) & (CTL - 1))) >> CTL_LOG2);
             xa += da;
-            out[i] += mulq15(mulq15((((o + 128) >> 8) * trim12) >> 12, amp), VOICE_FS) << 1;
+            out[i] += mulq15(mulq15((((o + 128) >> 8) * trim12) >> 12, amp), VOICE_FS) << (1 + FMINI_LADDER_IN);
         }
     }
     v->ph[0] = ph0;
