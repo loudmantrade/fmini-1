@@ -708,6 +708,7 @@ static int chk_mode_release(char *msg, uint32_t n)
             trk_note_on(&trk[0], 64, 100);
             trk[0].p[P_VOICE] = (int16_t)mode;
             trk[0].p[P_PRIO] = (int16_t)priority;
+            glo_note_prio = (uint8_t)priority;   /* the engine reads the GLO list's NOTE PRIORITY (FMini-1 has no per-track one) */
             trk_note_on(&trk[0], 72, 100);
             trk_note_on(&trk[0], 76, 100);
             trk_note_on(&trk[0], 80, 100);
