@@ -18,7 +18,7 @@ static void ml_knob(const track_t *t, uint32_t id);              /* (midi_learn.
 static uint8_t fmg_gdirty;                                        /* a global (FK_GLB) changed: fmini_app.c saves it */
 static uint8_t fmg_cur[12];                                        /* the cursor of each page: 0..3 the knobs, 4.. extras */
 
-enum { FK_BYTE, FK_PAR, FK_SW, FK_NAME, FK_GLIDE, FK_BYP, FK_INS, FK_GLB, FK_VOICE, FK_EDIT, FK_BEND, FK_WHEEL, FK_NONE, FK_FREL, FK_VOL, FK_VSENS };   /* FK_VSENS: PRESET SETTINGS' VELOCITY SENS. ON / OFF (fm_vel_sens) */   /* FK_VOL: PRESET SETTINGS' VOLUME, shown 0..10 (stored as P_LEVEL 0..127) */   /* FK_BEND (the preset's PITCH BEND range), FK_WHEEL (its MOD WHEEL position), FK_NONE (a knob with no function) */   /* FK_BYP: a send's on / off (its value kept aside); FK_INS: the INSERT; FK_EDIT (FMini-1): a button that opens an FX pop-up (a = 0..3: REVERB DELAY CHORUS DRIVE) */
+enum { FK_BYTE, FK_PAR, FK_SW, FK_NAME, FK_GLIDE, FK_BYP, FK_INS, FK_GLB, FK_VOICE, FK_EDIT, FK_BEND, FK_WHEEL, FK_NONE, FK_FREL, FK_VOL, FK_VSENS };   /* FK_VSENS: PRESET SETTINGS' VELOCITY SENS. ON / OFF (fm_vel_sens) */   /* FK_VOL: PRESET SETTINGS' VOLUME, shown 0..127 (= P_LEVEL) */   /* FK_BEND (the preset's PITCH BEND range), FK_WHEEL (its MOD WHEEL position), FK_NONE (a knob with no function) */   /* FK_BYP: a send's on / off (its value kept aside); FK_INS: the INSERT; FK_EDIT (FMini-1): a button that opens an FX pop-up (a = 0..3: REVERB DELAY CHORUS DRIVE) */
 typedef struct {
     const char *lb;                                               /* card label (<= 6) */
     uint8_t kind, a, b;                                           /* a: byte index or param id; b: switch bit / names */
@@ -243,9 +243,6 @@ static int32_t fmg_acc(uint32_t role, int32_t s, int32_t range)
 }
 
 /* control i of page pg moved s steps (a knob of the page, or ALGORITHM on the cursor's control) */
-/* VOLUME 0..10 <-> P_LEVEL 0..127: the shown value is the level's nearest tenth, so a patch shows the same number until it is turned */
-static int32_t fmg_vol10(int32_t lv) { return (lv * 10 + 63) / 127; }
-static int32_t fmg_vol_level(int32_t v) { return (v * 127 + 5) / 10; }
 
 static void fmg_turn(uint32_t pg, uint32_t i, int32_t s, uint32_t role)
 {
@@ -327,8 +324,8 @@ static void fmg_turn(uint32_t pg, uint32_t i, int32_t s, uint32_t role)
         fmg_write(f->a, (uint32_t)clamp((int32_t)fmg_byte(f->a) + s, 0, f->b == FN_WAVE ? 6 : 5));   /* a detent each */
         break;
     case FK_VOL: {
-        int32_t v = clamp(fmg_vol10(t->p[P_LEVEL]) + s, 0, 10);
-        t->p[P_LEVEL] = (int16_t)fmg_vol_level(v);
+        int32_t v = clamp((int32_t)t->p[P_LEVEL] + s, 0, 127);   /* the stored level itself, 0..127 */
+        t->p[P_LEVEL] = (int16_t)v;
         motion_capture(t, P_LEVEL, t->p[P_LEVEL]);
         ml_knob(t, P_LEVEL);
         break;
@@ -431,9 +428,9 @@ static void fmg_card_at(uint32_t pg, uint32_t i, int32_t vo, const char **label,
     *icon = f->icon;
     switch (f->kind) {
     case FK_VOL:
-        v = vo >= 0 ? vo : fmg_vol10(t->p[P_LEVEL]);
+        v = vo >= 0 ? vo : t->p[P_LEVEL];
         fmt_int(val, v);
-        *ratio = v * 100;
+        *ratio = v * 1000 / 127;
         return;
     case FK_PAR: {
         const param_desc_t *d = track_desc(TSEL, f->a);
