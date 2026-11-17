@@ -250,8 +250,6 @@
   .devs label { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; color: var(--fg); font-size: 14px; cursor: pointer; }
   .devs label:has(input:checked) { border-color: var(--or); background: rgba(255,122,26,.10); }
   .devs input { accent-color: var(--or); margin: 0; }
-  .fwother { margin: 6px 0 0; }
-  #fwpick { background: transparent; color: var(--dim); border: 1px solid var(--line); font-size: 13px; padding: 6px 10px; cursor: pointer; }
   .note.warn { color: #ffb37a; }
   details { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
   summary { cursor: pointer; color: var(--dim); font-size: 14.5px; }
@@ -428,7 +426,6 @@
         <summary data-t="logT"></summary>
         <p data-t="fwdl"></p>
         <ul class="fwlist" id="fwlist"></ul>
-        <p class="fwother"><button id="fwpick" type="button" data-t="fw_pick"></button><input type="file" id="fwfile" accept=".fwsc" hidden></p>
         <pre id="log"></pre>
       </details>
       </div>
@@ -456,7 +453,6 @@ const TEXT = {
     compat: "Compatível com as novas versões do FM-1 (com o chip de flash UC25HQ80).",
     warn: "Não desconecte o cabo USB durante a gravação.",
     install: "Instalar", other: "English",
-    fw_pick: "Instalar outro firmware (.fwsc)…", fw_bad: "Este arquivo não é um firmware válido para o FM-1 ou o SMK-37.",
     smknote: "SMK-37 (Pro, Elite e MKE-P37): a primeira inicialização apaga as configurações do firmware original. Para voltar ao original, use o firmware e o atualizador da M-Vave para o seu modelo.",
     det: "Dispositivo detectado: ", det_ota: " (em modo de atualização)", det_fw: " · instalando o FMini-1 ",
     editor: "Editor",
@@ -485,7 +481,7 @@ const TEXT = {
     ph_verify: "Verificar", ph_loader: "Modo de atualização", ph_write: "Gravar", ph_reboot: "Reiniciar", ph_done: "Pronto",
     tagline: "Emulação do Minimoog para o FM-1 e o SMK-37 (mono/poly)",
     feat: "3 osciladores · filtro ladder · 200 presets · arpejador · MIDI",
-    risk: "Use por sua conta e risco", logT: "Detalhes", fw: "Firmware",
+    risk: "Use por sua conta e risco", logT: "Baixar firmware", fw: "Firmware",
     fwdl: "Os firmwares desta página (.fwsc), para baixar:",
   },
   en: {
@@ -493,7 +489,6 @@ const TEXT = {
     compat: "Supports the new FM-1 versions (with the UC25HQ80 flash chip).",
     warn: "Do not unplug the USB cable while writing.",
     install: "Install", other: "Português",
-    fw_pick: "Install another firmware (.fwsc)…", fw_bad: "This file is not a valid firmware for the FM-1 or the SMK-37.",
     smknote: "SMK-37 (Pro, Elite and MKE-P37): the first start clears the stock firmware's settings. To go back to the stock firmware, use M-Vave's firmware and updater for your model.",
     det: "Detected device: ", det_ota: " (in update mode)", det_fw: " · installing FMini-1 ",
     editor: "Editor (after installing: edit sounds and sequences from the computer)",
@@ -522,7 +517,7 @@ const TEXT = {
     ph_verify: "Verify", ph_loader: "Update mode", ph_write: "Write", ph_reboot: "Restart", ph_done: "Done",
     tagline: "A Minimoog emulation for the M-Vave FM-1 and SMK-37 (mono/poly)",
     feat: "3 oscillators · ladder filter · 200 presets · arpeggiator · MIDI",
-    risk: "Use at your own risk", logT: "Details", fw: "Firmware",
+    risk: "Use at your own risk", logT: "Download firmware", fw: "Firmware",
     fwdl: "This page's firmwares (.fwsc), to download:",
   },
 };
@@ -707,7 +702,7 @@ $("lang").addEventListener("click", () => {
   applyLang();
 });
 applyLang();
-const sayK = (k, arg = "") => { lastKey = k; lastArg = arg; $("status").textContent = t(k) + arg; if (k === "done") $("tip").hidden = false; document.body.classList.toggle("bad", ["error","denied","notfound","model","unknown","lost","noloader","noreturn","mismatch","badpkg","stopped","loadfail","nomidi","fw_bad"].includes(k)); };
+const sayK = (k, arg = "") => { lastKey = k; lastArg = arg; $("status").textContent = t(k) + arg; if (k === "done") $("tip").hidden = false; document.body.classList.toggle("bad", ["error","denied","notfound","model","unknown","lost","noloader","noreturn","mismatch","badpkg","stopped","loadfail","nomidi"].includes(k)); };
 const say = (txt) => { lastKey = null; $("status").textContent = txt; };
 const log = (t) => { $("log").textContent += t + "\n"; };
 const PHASES = ["verify", "loader", "write", "reboot", "done"];
@@ -746,7 +741,6 @@ const meta = /*META*/;
 const PKGS = meta.pkgs;                       /* [{product, label, file, version, pkg}] */
 const modelOf = (product) => product.split("_")[0];
 const images = {};                            /* product -> the logical image */
-let picked = null;                            /* "Install another firmware": {image, product} */
 let ready = false;
 document.querySelectorAll(".curver").forEach((e) => { e.textContent = meta.smkVersion && meta.smkVersion !== meta.version ? "FM-1 v" + meta.version + " · SMK-37 v" + meta.smkVersion : "v" + meta.version + " · FM-1 · SMK-37"; });
 document.querySelectorAll(".curver-b").forEach((e) => { e.textContent = ""; });
@@ -839,10 +833,10 @@ async function runInstall(portName, chosen) {
     const ota = !!dev && /^ota-/i.test(dev.id.model);
     const model = dev ? dev.id.model.replace(/^ota-/i, "") : chosen;
     if (dev) dev.link.close();
-    const pk = picked ? { product: picked.product, version: picked.version || "?", label: modelOf(picked.product) } : PKGS.find((p) => modelOf(p.product) === model);
+    const pk = PKGS.find((p) => modelOf(p.product) === model);
     if (!pk) { sayK("unknown", dev ? dev.id.text : String(model)); lockInstaller(false); return; }
     showDetected(dev ? model : chosen, ota, pk);
-    const image = picked ? picked.image : images[pk.product];
+    const image = images[pk.product];
     if (ota) sayK((await up.resume(image, step, pk.product)) ? "done" : "stopped");
     else await up.install(image, pk.product, step);
   } catch (e) {
@@ -870,22 +864,6 @@ $("portgo").addEventListener("click", () => {
 });
 $("portno").addEventListener("click", () => $("portpick").close());
 $("go").addEventListener("click", () => runInstall(null, null));
-const hasMarker = (b) => { const m = "FELUCCA-LOADER-1"; for (let i = 0; i + m.length <= b.length; i++) { let k = 0; while (k < m.length && b[i + k] === m.charCodeAt(k)) k++; if (k === m.length) return true; } return false; };
-$("fwpick").addEventListener("click", () => $("fwfile").click());
-$("fwfile").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  e.target.value = "";
-  if (!file || writing) return;
-  try {
-    const pkg = new Uint8Array(await file.arrayBuffer());
-    const prod = productOf(pkg);
-    if (!/^(FM-1|SMK-37 Pro|SMK-37 Elite|MKE-P37)_9\d\d$/.test(prod) || !hasMarker(pkg)) { sayK("fw_bad"); picked = null; return; }
-    picked = { image: logicalImage(pkg), product: prod, version: (file.name.match(/(\d+\.\d+\.\d+)/) || [])[1] };
-    say(`${file.name} (${prod})`);
-    $("go").disabled = !ready;
-    setBar(0, null);
-  } catch (_) { sayK("fw_bad"); picked = null; }
-});
 
 
 /* ---- hero: the Minimoog splits in two as the page scrolls: one dives into the FM-1's screen, the other into the
