@@ -2241,7 +2241,7 @@ static int fa_save_slot(uint32_t k, const char *name)
     for (i = 0; i < 4u; i++)
         par[8 + i] = (uint8_t)t->p[ENV[i]];
     par[12] = (uint8_t)(int8_t)t->p[P_ED_FLT];
-    par[13] = t->p[P_VOICE] == V_LEGATO ? 1u : 0u;
+    par[13] = t->p[P_VOICE] == V_POLY ? 0u : 1u;   /* the factory's meaning: 1 = MONO (legato too), 0 = POLY (2.6.2: MONO was saved as POLY) */
     for (i = 0; i < 4u; i++)
         par[14 + i] = (uint8_t)(clamp(t->p[P_DIST + i], 0, 127) + 1);
     memcpy(patch, fmini_patch[tr], FG_SIZE);

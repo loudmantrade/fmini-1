@@ -1097,6 +1097,8 @@ pitch from velocity 111 up (`tests/fmini_filter_test.c`, 3a: 0.0 cents from velo
 Felucca's other engines (`voice.c`). A patch played with velocities above 110 sounds darker than on 1.7.2 and older, as it was
 made to; the 100 factory goldens moved for that reason (`regress.c` plays a note at 120).
 
+**2.6.2 (saved MONO):** a user record's PARAM byte 13 (the mono flag, as the factory's: 1 = MONO, 0 = POLY) was written as 1 only for LEGATO, so a MONO preset saved as 0 and loaded as POLY. New saves write 1 for MONO. Records saved by 2.6.1 or earlier that were MONO load as POLY: save them again.
+
 **Version 2.6.0 (no new command, INFO unchanged):** `P_E2` (CNTR, the filter contour's AMOUNT) changed
 meaning. It was linear, 127 = 5 octaves of cutoff at a full contour; it now follows the CA-72's AMOUNT taper
 (`voice::contour_amount_track`: 0.25 of the knob is 21 %, 0.5 is 51 %, 0.75 is 80 %) over 6.3 octaves (`FMINI_CNTR`,
