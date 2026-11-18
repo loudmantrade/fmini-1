@@ -69,31 +69,40 @@ def run(b, step, ps, v=110):
     return [N(b + k * step, step * 0.9, p, v) for k, p in enumerate(ps)]
 
 
+def vibrato(t0, t1, amp, period):
+    """a sung or bent vibrato between t0 and t1: the bend swings +-amp semitones every `period` seconds"""
+    pts, t, k = [], t0, 0
+    while t < t1:
+        pts.append((round(t, 4), amp if k % 2 == 0 else -amp))
+        t += period / 2
+        k += 1
+    pts.append((t1, 0.0))
+    return pts
+
+
 def mini_lead(off):
-    # 000 MINI LEAD: a fast synth solo in the manner of a Wakeman lead, 160 bpm, E minor: sixteenth runs up and
-    # down, a fast arpeggio, a trill, a chromatic fall and a sweep, with bends on the held notes
-    bpm = 160
+    # 000 MINI LEAD: a hard rock solo, 150 bpm, E minor pentatonic: a bent power phrase, a held G5 bent two semitones
+    # up, sixteenth runs, a stabbed figure, a held D6 with a bend down, a big held E5 bent up and dropped, a flurry
+    bpm = 150
     T = lambda b: START + b * 60.0 / bpm
     it = []
-    it += run(0.0, .25, [64, 66, 67, 69, 71, 72, 74, 76])            # the E minor scale up, sixteenths
-    it += [N(2.0, 1.0, 76, 115)]                                      # a held E5, bent up and back
-    it += run(3.0, .25, [83, 79, 76, 71, 67, 69, 71, 74])             # the arpeggio down, then up
-    it += run(4.75, .25, [72, 73, 74, 75, 76, 77, 78, 79])           # a chromatic climb
-    it += run(6.5, .25, [79, 76, 79, 83])                             # the figure that turns
-    it += [N(7.25, .25, 81), N(7.5, .25, 83), N(7.75, .25, 81), N(8.0, .25, 83), N(8.25, 1.0, 84, 120)]   # the trill
-    it += run(9.5, .25, [84, 83, 82, 81, 80, 79, 78, 77])            # the chromatic fall
-    it += [N(11.25, 1.0, 76, 110)]                                    # E5, fall off with a bend down
-    it += [N(12.5, .25, 83), N(12.75, .25, 83), N(13.0, .25, 81), N(13.25, .5, 79), N(13.75, .25, 78), N(14.0, .5, 76)]
-    it += run(14.5, .25, [64, 67, 71, 76, 79, 83])                    # the big arpeggio up
-    it += [N(16.0, 1.0, 86, 120)]                                     # a high D6, scooped up into it
-    it += run(17.25, .25, [76, 79, 76, 83, 76, 79, 83, 86])           # the flurry
-    it += run(19.25, .25, [86, 84, 83, 81, 79, 76, 74, 72])           # the sweep down
-    it += [N(21.0, 3.0, 76, 120)]                                     # the last E5, bent down at the end
-    bends = [(0.0, 0.0), (T(2.0), 0.0), (T(2.3), 1.5), (T(2.8), 1.5), (T(3.0), 0.0),
-             (T(11.5), 0.0), (T(12.2), -2.0), (T(12.25), 0.0),
-             (T(16.0), -2.0), (T(16.3), 0.0),
-             (T(22.5), 0.0), (T(23.9), -2.0), (T(24.0), 0.0)]
-    return score(bpm, it, off, legato=0.92) + bend_path(bends)
+    it += run(0.0, .25, [64, 67, 69, 71, 74, 76, 79, 76])            # the pentatonic run up
+    it += [N(2.0, 2.0, 79, 127)]                                       # G5, bent up two semitones
+    it += run(4.0, .25, [76, 79, 83, 79, 76, 74])                      # the run down, bluesy
+    it += [N(5.5, .5, 76, 120), N(6.0, .5, 76, 120), N(6.5, .25, 79, 120), N(6.75, .25, 83, 120), N(7.0, 1.0, 86, 127)]
+    it += run(8.0, .25, [86, 83, 79, 76, 74, 71, 69, 67])            # the sweep down
+    it += [N(10.0, .5, 69, 120), N(10.5, .5, 71, 120), N(11.0, 1.0, 74, 127), N(12.0, .25, 76, 120),
+           N(12.25, .25, 74, 120), N(12.5, .5, 71, 120)]
+    it += run(13.0, .25, [83, 86, 83, 86, 83, 86, 83, 79])            # the fast figure
+    it += [N(15.0, 2.0, 79, 127)]                                      # the big held note, bent up and dropped
+    it += run(17.0, .25, [76, 79, 83, 86, 83, 79, 76, 74])            # the flurry
+    it += [N(19.0, 2.5, 76, 127)]                                      # the last E5, vibrato, then dropped
+    bends = [(0.0, 0.0), (T(2.0), 0.0), (T(2.5), 2.0), (T(3.0), 2.0), (T(3.5), 0.0),
+             (T(7.0), 0.0), (T(7.5), -1.0), (T(8.0), 0.0),
+             (T(11.0), 0.0), (T(11.5), 2.0), (T(12.0), 0.0),
+             (T(15.0), 0.0), (T(15.4), 2.0), (T(16.5), 2.0), (T(17.0), -2.0), (T(17.2), 0.0),
+             (T(19.0), 0.0)] + vibrato(T(19.0), T(21.5), 0.5, 0.2)[1:-1] + [(T(21.5), 0.0), (T(22.0), -2.0)]
+    return score(bpm, it, off, legato=0.92) + bend_path(sorted(bends))
 
 
 def moog_bass(off):
@@ -130,22 +139,18 @@ def pad_swell(off):
 
 
 def sine_solo(off):
-    # 004 SINE SOLO: a jazzy solo over Dm7 - G7 - Cmaj7 - Am7 - D7 - G (at 130 bpm, swung eighths): chord tones with
-    # chromatic approach notes and blue notes (the flat third and the flat seventh), held and sung
-    bpm = 130
+    # 004 SINE SOLO: a soul ballad in Bb, 84 bpm, laid back: scooped entries, a melisma, a held D5 with a vibrato, a
+    # phrase that sits behind the beat, and a run that ends on a held G5 dropped away
+    bpm = 84
     T = lambda b: START + b * 60.0 / bpm
-    it = [N(0.0, 1.0, 74), N(1.0, .667, 77), N(1.667, .333, 76), N(2.0, .667, 74), N(2.667, .333, 72),
-          N(3.0, 1.0, 70),                                           # the blue Bb4, resolved down
-          N(4.0, .667, 71), N(4.667, .333, 72), N(5.0, .667, 74), N(5.667, .333, 77), N(6.0, 1.0, 79),
-          N(7.0, .667, 78), N(7.667, .333, 77),                      # G7: the chromatic F#5 into F5
-          N(8.0, .667, 76), N(8.667, .333, 74), N(9.0, .667, 72), N(9.667, .333, 71), N(10.0, 1.0, 67),
-          N(11.0, .667, 69), N(11.667, .333, 71),                    # Cmaj7 and the walk to A
-          N(12.0, .667, 72), N(12.667, .333, 69), N(13.0, .667, 64), N(13.667, .333, 67), N(14.0, 1.0, 70, 110),
-          N(15.0, .667, 69), N(15.667, .333, 66),                    # Am7 - D7, the blue Bb4 on the D7
-          N(16.0, 1.0, 74, 115), N(17.0, .667, 71), N(17.667, .333, 69), N(18.0, 1.0, 74, 105)]   # home on D
-    bends = [(0.0, 0.0), (T(3.0), 0.0), (T(3.0) + 0.15, -0.5), (T(4.0), 0.0),
-             (T(14.0), -0.5), (T(14.0) + 0.2, 0.0), (T(18.0) + 0.6, 0.0), (T(18.0) + 0.9, -1.0)]
-    return score(bpm, it, off, legato=0.96) + bend_path(bends)
+    it = [N(0.5, 1.5, 70, 100), N(2.0, .5, 72), N(2.5, .5, 74), N(3.0, 1.5, 75),           # the scooped Bb4, the lift
+          N(4.5, .25, 77), N(4.75, .25, 79), N(5.0, .25, 77), N(5.25, .25, 75), N(5.5, 2.0, 74),   # the melisma, D5
+          N(7.5, .5, 72), N(8.0, .5, 70), N(8.5, .75, 67), N(9.25, .75, 70),                       # behind the beat
+          N(10.0, .25, 72), N(10.25, .25, 74), N(10.5, .25, 75), N(10.75, .25, 77), N(11.0, 1.5, 79)]  # the run to G5
+    bends = [(0.0, 0.0), (T(0.5), -2.0), (T(0.8), 0.0),                                         # the scoop into Bb4
+             (T(3.0), 0.0), (T(3.4), -0.3), (T(3.8), 0.0)] + vibrato(T(5.5), T(7.5), 0.4, 0.6)[:-1]
+    bends += [(T(7.5), 0.0), (T(12.3), -2.0), (T(12.5), 0.0)]                                    # the drop at the end
+    return score(bpm, it, off, legato=0.96) + bend_path(sorted(bends))
 
 
 def space_drone(off):

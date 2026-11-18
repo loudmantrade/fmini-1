@@ -14,7 +14,7 @@ sys.path.insert(0, str(HERE))
 import fmini_filter as FF  # noqa: E402   (the filter's laws: CUTOFF dial, EMPHASIS dial, keyboard zero; one source for the firmware and for this)
 
 R = {"LO": 0, "32": 1, "16": 2, "8": 3, "4": 4, "2": 5}
-W = {"TRI": 0, "SHK": 1, "SAW": 2, "SQR": 3, "PW": 4, "PN": 5}
+W = {"TRI": 0, "SHK": 1, "SAW": 2, "SQR": 3, "PW": 4, "PN": 5, "SIN": 6}   # 6 SIN: the firmware's sine (eng_fmini.c)
 AM = {"OFF": 0, "UP": 1, "DN": 2, "UPDN": 3, "RND": 4, "ORD": 5, "REPEAT": 6, "DNUP": 7, "UP+8": 8, "CONV": 9, "DIVG": 10,
       "PINKY": 11, "THUMB": 12, "WALK": 13, "CHORD": 14}
 AR = {"1/4": 0, "1/8": 1, "1/16": 2, "1/32": 3, "8T": 4, "16T": 5, "1/2": 6, "1/1": 7}

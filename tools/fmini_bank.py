@@ -925,14 +925,14 @@ def preset_moves(b):
     # the delay MIX 2.5; the chorus MIX 4.0 (the dials as the screen shows them, 0.0-10.0 -> the bytes)
     x = P[4]
     x["g"][0] = R["8"]                     # OSC 1 range 8'
-    x["g"][3] = W["TRI"]                   # OSC 1 wave triangle
+    x["g"][3] = W["SIN"]                   # OSC 1 wave sine (2.6.5: was the triangle)
     x["g"][8] = knob(10.0)                 # OSC 1 volume
     x["g"][9] = 0                          # OSC 2 volume 0 ...
     x["g"][10] = 0                         # OSC 3 volume 0 ...
     x["g"][12] = (x["g"][12] & ~(2 | 4)) | 1   # ... and their switches off (OSC 1 on; the noise, mod bits as they were)
     x["g"][13] |= 1                        # GLIDE on
     x["g"][17] = knob(5.2)                 # GLIDE time
-    x["e"][0] = round((-1.9 + 5.0) * 127 / 10.0)   # CUTOFF -1.9 on the dial
+    x["e"][0] = 127                        # CUTOFF fully open, +5.0 on the dial (2.6.5: was -1.9, closed)
     x["amp"][0] = knob(3.6)                # loudness ATTACK
     x["amp"][1] = knob(5.9)                # loudness DECAY
     x["send"][1] = knob(4.0)               # CHORUS MIX
