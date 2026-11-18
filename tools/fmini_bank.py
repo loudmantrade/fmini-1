@@ -896,6 +896,10 @@ def preset_moves(b):
     for i in (10, 40):
         P[i]["g"][6] = 63
         P[i]["g"][18], P[i]["g"][19] = det_cents(-10)
+    # 2.6.4 (the owner's): 000 MINI LEAD DET 2 +0.08 (was +0.11). The coarse byte is the nearest step (11 cents: +1), the
+    # cents bytes carry the 8, as for 010 and 040 above
+    P[0]["g"][6] = 65
+    P[0]["g"][18], P[0]["g"][19] = det_cents(8)
     # 1.14.23: 010 EMPHASIS 3.2
     P[10]["e"][1] = emp(3.2)
     # 1.14.24: 099 UFO is copied over 009 (the whole patch, its name too)
