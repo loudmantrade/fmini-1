@@ -109,6 +109,11 @@
   .copy2 h2 { margin: 0 auto; font-size: clamp(26px, 4vw, 40px); }
   .copy2 p { margin: 10px auto 0; color: var(--dim); max-width: 560px; }
   .copy2 .cta { justify-content: center; margin-top: 20px; }
+  .cta .heroTry .car { font-size: 10px; margin-left: 8px; opacity: .7; }
+  .cta .trymenu { left: 0; right: auto; min-width: 230px; }
+  .cta .trymenu a { display: flex; align-items: baseline; gap: 10px; color: var(--fg); text-decoration: none; padding: 10px 12px; border-radius: 8px; font-weight: 600; white-space: nowrap; }
+  .cta .trymenu a small { color: var(--mute); font: 500 11.5px/1 var(--mono); }
+  .cta .trymenu a:hover { background: var(--surface2); }
   .hint { position: absolute; z-index: 3; pointer-events: none; left: 0; right: 0; bottom: 14px; text-align: center; font: 500 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); }
   .hint i { display: block; width: 1px; height: 26px; margin: 8px auto 0; background: linear-gradient(var(--mute), transparent); animation: hint 1.6s ease-in-out infinite; }
   @keyframes hint { 50% { transform: translateY(6px); opacity: .4; } }
@@ -322,7 +327,8 @@
         <p class="sub" data-t="sub"></p>
         <div class="cta">
           <a class="btn pri" href="#install" data-t="cta_install"></a>
-          <a class="btn sec2" href="#screens" data-t="cta_screens"></a>
+          <div class="trywrap heroTry"><button type="button" class="btn sec2" id="herotry" aria-haspopup="true" aria-expanded="false"><span data-t="cta_try"></span><span class="car">▾</span></button>
+            <div class="trymenu" id="heromenu" hidden><a href="emu/">FM-1 <small data-t="try_fm1"></small></a><a href="emu/smk/">SMK-37 <small data-t="try_smk"></small></a></div></div>
         </div>
         <p class="cta-ver curver"></p>
         <ul class="tags"><li>3 OSC</li><li data-t="chip_f"></li><li data-t="chip_p"></li><li>ARP</li><li>SEQ</li><li>MIDI</li></ul>
@@ -1366,7 +1372,7 @@ const SITE = {
     nav_f: "Som", nav_s: "Telas", nav_ft: "Features", nav_ed: "Editor", nav_i: "Instalar",
     sub: "Um firmware aberto que transforma o M-VAVE FM-1 e o SMK-37 em sintetizadores monofônicos e polifônicos. O FMini-1 usa a técnica de Analog Circuit Modelling, criada a partir dos esquemas reais do Minimoog para reproduzir com precisão o comportamento do instrumento original: três osciladores, filtro ladder, contornos, efeitos e tudo ao alcance dos botões e knobs do seu teclado.",
     chip_f: "Filtro ladder", chip_p: "200 presets",
-    cta_install: "Instalar agora", cta_screens: "Ver as telas",
+    cta_install: "Instalar agora", cta_try: "Testar no navegador", cta_screens: "Ver as telas",
     h_sound: "O som", l_sound: "Cada bloco do painel do Minimoog tem seu lugar na tela de 240 × 240, a mesma no FM-1 e no SMK-37, com knobs físicos para tocar de verdade.",
     f1t: "Banco de osciladores", f1d: "Três osciladores com faixas de LO a 2', forma de onda individual, ajuste fino (detune) independente nos osciladores 2 e 3 e uma leve deriva de afinação, como a dos VCOs analógicos.",
     f2t: "Filtro ladder", f2d: "Ladder de 4 polos, 24 dB/oitava, com saturação em cada estágio e o atraso de realimentação do circuito do Minimoog. Com a ênfase a partir de 8 o filtro auto-oscila numa senoide pura que acompanha o teclado em 1 V/oitava. O corte é lido de −5 a +5, como no painel.",
@@ -1413,7 +1419,7 @@ const SITE = {
     nav_f: "Sound", nav_s: "Screens", nav_ft: "Features", nav_ed: "Editor", nav_i: "Install",
     sub: "An open firmware that turns the M-VAVE FM-1 and SMK-37 into monophonic and polyphonic synths. FMini-1 uses Analog Circuit Modelling, built from the actual Minimoog schematics to accurately reproduce the behaviour of the real instrument: three oscillators, a ladder filter, contours and effects, all within reach of your keyboard's buttons and knobs.",
     chip_f: "Ladder filter", chip_p: "200 presets",
-    cta_install: "Install now", cta_screens: "See the screens",
+    cta_install: "Install now", cta_try: "Try in browser", cta_screens: "See the screens",
     h_sound: "The sound", l_sound: "Each block of the Minimoog panel has its place on the 240 × 240 screen, the same on the FM-1 and the SMK-37, with real knobs to play it for real.",
     f1t: "Oscillator bank", f1d: "Three oscillators with ranges from LO to 2', a waveform each, independent detune on oscillators 2 and 3 and a touch of pitch drift, like analog VCOs.",
     f2t: "Ladder filter", f2d: "A four-pole ladder, 24 dB/octave, with saturation in every stage and the feedback lag of the Minimoog circuit. From emphasis 8 up it self-oscillates as a pure sine that follows the keyboard at 1 V/octave. Cutoff reads -5 to +5, as on the panel.",
@@ -1582,6 +1588,8 @@ $("tipx").addEventListener("click", () => { $("tip").hidden = true; });
 $("trybtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("trymenu").hidden; $("trymenu").hidden = !open; $("trybtn").setAttribute("aria-expanded", String(open)); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); });
 $("manbtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("manmenu").hidden; $("manmenu").hidden = !open; $("manbtn").setAttribute("aria-expanded", String(open)); $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); });
 document.addEventListener("click", (e) => { if (!e.target.closest(".trywrap")) { $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); } });
+$("herotry").addEventListener("click", (e) => { e.stopPropagation(); const open = $("heromenu").hidden; $("heromenu").hidden = !open; $("herotry").setAttribute("aria-expanded", String(open)); });
+document.addEventListener("click", (e) => { if (!e.target.closest(".heroTry")) { $("heromenu").hidden = true; $("herotry").setAttribute("aria-expanded", "false"); } });
 addEventListener("keydown", (e) => { if (e.key === "Escape") { $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); } });
 $("tip").addEventListener("click", (e) => { if (e.target.id === "tip") $("tip").hidden = true; });
 $("lang").addEventListener("click", () => {
