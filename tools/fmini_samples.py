@@ -49,6 +49,19 @@ def C(b, d, ns, v=100):
 START = 0.4
 
 
+def bend_path(points, step=0.02):
+    """pitch bend events along breakpoints (t seconds, semitones); the range is +-2 (the factory's PITCH BEND 0),
+    so a semitone is 4096 steps around the centre 8192. Linear between the points, one event every `step` s."""
+    ev = []
+    for (t0, s0), (t1, s1) in zip(points, points[1:]):
+        n = max(1, int(round((t1 - t0) / step)))
+        for i in range(n + 1):
+            t = t0 + (t1 - t0) * i / n
+            v = s0 + (s1 - s0) * i / n
+            ev.append([round(t, 4), "bend", max(0, min(16383, round(8192 + v * 4096)))])
+    return ev
+
+
 # ---- the ten arrangements: a keyboardist's line for each patch, in the register it sounds in ----
 
 def mini_lead(off):
@@ -58,18 +71,23 @@ def mini_lead(off):
           N(9, .5, 72), N(9.5, .5, 71), N(10, 1.5, 69),
           N(12, .25, 67), N(12.25, .25, 69), N(12.5, .25, 71), N(12.75, .25, 72), N(13, 1, 76), N(14, .5, 74),
           N(14.5, .5, 71), N(15, 1, 69), N(16.5, 2.5, 69, 110)]
-    return score(120, it, off, legato=0.95)
+    T = lambda b: START + b * 0.5   # 120 bpm: a beat is half a second
+    bends = [(0.0, 0.0), (T(1.5), -2.0), (T(1.5) + 0.2, 0.0),                    # scoop up into the E5
+             (T(7.0), 0.0), (T(7.9), -2.0), (T(8.0), 0.0),                     # fall off the C5 before the D5
+             (T(16.5) + 0.2, 0.0), (T(16.5) + 0.7, 1.0), (T(16.5) + 1.2, 0.0)]  # the last note bends up and back
+    return score(120, it, off, legato=0.95) + bend_path(bends)
 
 
 def moog_bass(off):
-    # 001 MOOG BASS: a sixteenth-note bass riff in E minor, octave jumps, two cycles and a held octave
+    # 001 MOOG BASS: a sixteenth-note bass riff in E minor, octave jumps, two cycles and a held octave, an octave down
     c1 = [N(0, .5, 40), N(.75, .25, 52), N(1, .25, 40), N(1.5, .25, 43), N(1.75, .25, 40), N(2, .5, 45),
           N(2.5, .25, 47), N(2.75, .25, 45), N(3, .25, 43), N(3.5, .5, 40), N(4, .25, 40), N(4.25, .25, 40),
           N(4.5, .5, 52), N(5, .25, 50), N(5.25, .25, 47), N(5.5, .25, 43), N(5.75, .25, 45), N(6, .5, 47),
           N(6.5, .25, 40), N(6.75, .25, 52), N(7, .25, 43), N(7.25, .25, 45), N(7.5, .25, 47), N(7.75, .25, 50)]
     c2 = [(b + 8, d, n, v + (10 if i % 4 == 0 else 0)) for i, (b, d, n, v) in enumerate(c1)]
     c2 += [N(15.5, .25, 52, 120), N(15.75, 1.0, 52, 110)]
-    return score(110, c1 + c2, off, legato=0.85)
+    # one octave lower than the first version: the same riff with the key sent one octave higher
+    return score(110, c1 + c2, off + 12, legato=0.85)
 
 
 def pluck_arp(off):
@@ -139,11 +157,9 @@ def lush_strings(off):
 
 
 def aura_atmos(off):
-    # 008 AURA ATMOS: a cluster that turns into another, a glassy motif on top, the bell figure on the offbeats
-    it = C(0, 5.0, (60, 64, 67, 71, 74, 77), 88) + C(5, 5.0, (62, 67, 69, 71, 74, 79), 88)
-    it += [N(1.5, .25, 84, 96), N(3.0, .25, 88, 96), N(4.25, .5, 86, 96), N(6.5, .25, 79, 96),
-           N(7.5, .25, 83, 96), N(8.75, .5, 86, 96)]
-    return score(72, it, off, legato=1.0)
+    # 008 AURA ATMOS: two notes an octave apart, sustained the whole sample, in the middle-lower register (C3 and C4)
+    it = C(0, 9.2, (48,), 100) + C(0, 9.2, (60,), 100)
+    return score(60, it, off, legato=1.0)
 
 
 def ufo_sweep(off):
