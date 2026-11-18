@@ -19,130 +19,144 @@ FS = 44100
 BARS = 120
 
 
-def mono(notes, start, step, length=None, legato=True):
-    """a mono line: each note starts at start + i*step; legato: the note ends when the next one starts (after it)"""
+# The pitch each patch sounds for a key: a test note sent at MIDI 60 is heard at this many semitones away (measured on
+# the emulator with a single held note). The patch's own footages (a 16' oscillator sounds an octave low) decide it,
+# not the OCTAVE field alone, so a line is sent at (wanted - offset) and comes out where it is written.
+HEARD_OFFSET = {0: -12, 1: -24, 2: 0, 3: -12, 4: 0, 5: -12, 6: -12, 7: 0, 8: -12, 9: 0}
+
+
+def score(bpm, items, offset, legato=0.92):
+    """items: (beat, dur, sounding midi note, velocity) in beats; offset: the patch's HEARD_OFFSET"""
+    shift = -offset
+    s = 60.0 / bpm
     ev = []
-    for i, n in enumerate(notes):
-        t = start + i * step
-        ev.append([t, "on", n, 100])
-        if legato and i + 1 < len(notes):
-            ev.append([t + step, "off", n])
-        else:
-            ev.append([t + (length or step * 0.7), "off", n])
+    for b, d, n, v in items:
+        t0 = START + b * s
+        t1 = t0 + d * s * legato
+        ev.append([round(t0, 4), "on", n + shift, v])
+        ev.append([round(min(t1, DUR - 0.25), 4), "off", n + shift])
     return ev
 
 
-def chords(seq, start, hold, gap=0.0, vel=100):
-    """poly chords, one after another; each held `hold` seconds"""
-    ev, t = [], start
-    for ch in seq:
-        for n in ch:
-            ev.append([t, "on", n, vel])
-        for n in ch:
-            ev.append([t + hold, "off", n])
-        t += hold + gap
-    return ev
+def N(b, d, n, v=100):
+    return (b, d, n, v)
 
 
-def overlap(seq, start, step, hold, vel=100):
-    """poly chords, each new one before the last is let go (a pad's breath)"""
-    ev = []
-    for k, ch in enumerate(seq):
-        t = start + k * step
-        for n in ch:
-            ev.append([t, "on", n, vel])
-        end = t + step + 0.2 if k + 1 < len(seq) else start + len(seq) * step + hold
-        for n in ch:
-            ev.append([min(end, DUR - 0.2), "off", n])
-    return ev
+def C(b, d, ns, v=100):
+    return [(b, d, n, v) for n in ns]
 
 
-def melody_lead():
-    # MINI LEAD: a mono phrase in A minor, legato, so the glide slides between the notes
-    notes = [69, 72, 74, 76, 74, 72, 69, 67, 65, 67, 69, 72]
-    return mono(notes, 0.3, 0.7) + [[9.0, "on", 69, 100], [9.6, "off", 69]]
+START = 0.4
 
 
-def bass_line():
-    # MOOG BASS: a short bass pattern, notes apart, A1 and its fifth, fourth and octave
-    notes = [33, 33, 40, 33, 36, 33, 38, 40] * 2
-    return mono(notes, 0.2, 0.6, length=0.42, legato=False)
+# ---- the ten arrangements: a keyboardist's line for each patch, in the register it sounds in ----
+
+def mini_lead(off):
+    # 000 MINI LEAD: a mono line in A minor, syncopated, with a sixteenth run and a long landing
+    it = [N(0.5, .5, 69), N(1, .5, 72), N(1.5, 1, 76), N(2.5, .5, 74), N(3, .5, 72), N(3.5, .5, 71), N(4, 1, 69),
+          N(5.5, .5, 67), N(6, .5, 69), N(6.5, 1.5, 72), N(8, .5, 74), N(8.5, .25, 76), N(8.75, .25, 74),
+          N(9, .5, 72), N(9.5, .5, 71), N(10, 1.5, 69),
+          N(12, .25, 67), N(12.25, .25, 69), N(12.5, .25, 71), N(12.75, .25, 72), N(13, 1, 76), N(14, .5, 74),
+          N(14.5, .5, 71), N(15, 1, 69), N(16.5, 2.5, 69, 110)]
+    return score(120, it, off, legato=0.95)
 
 
-def arp_chords():
-    # PLUCK ARP: two held chords, the arpeggiator (on in this preset) plays them in order
-    ev = []
-    for n in (60, 63, 67, 70):
-        ev.append([0.1, "on", n, 100])
-        ev.append([4.8, "off", n])
-    for n in (53, 56, 60, 63):
-        ev.append([4.9, "on", n, 100])
-        ev.append([9.6, "off", n])
-    return ev
+def moog_bass(off):
+    # 001 MOOG BASS: a sixteenth-note bass riff in E minor, octave jumps, two cycles and a held octave
+    c1 = [N(0, .5, 40), N(.75, .25, 52), N(1, .25, 40), N(1.5, .25, 43), N(1.75, .25, 40), N(2, .5, 45),
+          N(2.5, .25, 47), N(2.75, .25, 45), N(3, .25, 43), N(3.5, .5, 40), N(4, .25, 40), N(4.25, .25, 40),
+          N(4.5, .5, 52), N(5, .25, 50), N(5.25, .25, 47), N(5.5, .25, 43), N(5.75, .25, 45), N(6, .5, 47),
+          N(6.5, .25, 40), N(6.75, .25, 52), N(7, .25, 43), N(7.25, .25, 45), N(7.5, .25, 47), N(7.75, .25, 50)]
+    c2 = [(b + 8, d, n, v + (10 if i % 4 == 0 else 0)) for i, (b, d, n, v) in enumerate(c1)]
+    c2 += [N(15.5, .25, 52, 120), N(15.75, 1.0, 52, 110)]
+    return score(110, c1 + c2, off, legato=0.85)
 
 
-def pad_swell():
-    # PAD SWELL: four overlapping chords, slow in and out
-    return overlap([(48, 55, 64), (45, 52, 60), (41, 48, 57), (43, 50, 59)], 0.2, 2.4, 2.4)
+def pluck_arp(off):
+    # 002 PLUCK ARP: an Am9 - Fmaj7 - C6 - G7sus4 loop, struck twice per chord; the arpeggiator fills the gaps
+    prog = [(57, 60, 64, 67, 71), (53, 57, 60, 64), (60, 64, 67, 69), (55, 60, 62, 65)]
+    it = []
+    for k in range(4):
+        for rep in range(2):
+            b = k * 2 + rep * 8
+            it += C(b, 1.5, prog[k], 100)
+            it += C(b + 1.75, .5, prog[k], 90)
+    return score(108, it, off, legato=0.9)
 
 
-def sine_solo():
-    # SINE SOLO: a sung melody, long notes
-    seq = [(67, 2.0), (69, 1.0), (72, 2.0), (71, 1.0), (69, 1.5), (67, 1.5)]
-    ev, t = [], 0.3
-    for n, d in seq:
-        ev += [[t, "on", n, 100], [t + d - 0.08, "off", n]]
-        t += d
-    return ev
+def pad_swell(off):
+    # 003 PAD SWELL: Dm9 - Bbmaj7 - Gm7 - A7sus4, voices moving together, each chord breathing into the next
+    prog = [(50, 57, 60, 64), (46, 53, 57, 62), (55, 58, 62, 65), (57, 62, 64, 67)]
+    it = []
+    for k, ch in enumerate(prog):
+        it += C(k * 3, 3.6, ch, 92)
+    return score(96, it, off, legato=1.0)
 
 
-def space_drone():
-    # SPACE DRONE: two low chords that move slowly
-    ev = []
-    for n in (36, 43, 48):
-        ev += [[0.1, "on", n, 90], [5.0, "off", n]]
-    for n in (34, 41, 46):
-        ev += [[5.1, "on", n, 90], [9.6, "off", n]]
-    return ev
+def sine_solo(off):
+    # 004 SINE SOLO: a sung melody in D major, with grace notes, a rubato held note and a turn at the end
+    it = [N(0, 1.5, 74, 100), N(1.5, .5, 76), N(2, 1.0, 78), N(3, .5, 76), N(3.5, .5, 74), N(4, 1.0, 71),
+          N(5, .125, 73), N(5.125, .125, 74), N(5.25, .25, 71), N(5.5, 1.5, 74, 110),
+          N(7, .5, 78), N(7.5, .5, 76), N(8, .5, 74), N(8.5, .5, 71), N(9, 1.0, 69),
+          N(10, .25, 71), N(10.25, .25, 73), N(10.5, .25, 74), N(10.75, .25, 73), N(11, 1.0, 74, 110)]
+    return score(84, it, off, legato=0.96)
 
 
-def cs80_brass():
-    # CS-80 BRASS: punchy chords, eight stabs
-    stabs = [(48, 55, 60), (44, 51, 56), (46, 53, 58), (43, 50, 55)] * 2
-    ev = []
-    for k, ch in enumerate(stabs):
-        t = 0.2 + k * 1.2
-        for n in ch:
-            ev += [[t, "on", n, 115], [t + 0.9, "off", n]]
-    return ev
+def space_drone(off):
+    # 005 SPACE DRONE: a C pedal under Cm - Ab - Bb - Cm add9, a bell melody on top every few beats
+    it = []
+    for b, ch in ((0, (48, 55, 63)), (3, (44, 51, 60)), (6, (46, 53, 62)), (9, (48, 55, 62, 74))):
+        it += C(b, 3.6, ch, 90)
+    it += C(0, 12, (36,), 80)   # the pedal tone, an octave below (C2)
+    for b, n in ((1.5, 79), (4.5, 75), (7.5, 72), (10.5, 67)):
+        it += [N(b, 2.5, n, 96)]
+    return score(80, it, off, legato=1.0)
 
 
-def lush_strings():
-    # LUSH STRINGS: a slow progression, the voices kept together
-    return overlap([(50, 57, 60, 65), (46, 53, 57, 65), (43, 50, 58, 62), (45, 52, 55, 61)], 0.2, 2.4, 2.4, vel=90)
+def cs80_brass(off):
+    # 006 CS-80 BRASS: a syncopated horn riff over Bb - Gm - Eb - F7, short stabs with an offbeat, a held Bb at the end
+    prog = [(58, 62, 65), (55, 58, 62), (51, 55, 58), (53, 57, 60, 63)]
+    it = []
+    for k, ch in enumerate(prog):
+        b = k * 4
+        it += C(b, .4, ch, 115)
+        it += C(b + 1.5, .3, ch, 100)
+        it += C(b + 2.0, .3, ch, 105)
+        it += C(b + 3.5, .4, ch, 115)
+    it += C(16, 1.5, (58, 62, 65), 110)
+    return score(120, it, off, legato=0.9)
 
 
-def aura_atmos():
-    # AURA ATMOS: one cluster that turns into another
-    ev = []
-    for n in (57, 60, 64, 67, 71, 74):
-        ev += [[0.2, "on", n, 90], [5.2, "off", n]]
-    for n in (55, 60, 62, 66, 69, 72):
-        ev += [[5.0, "on", n, 90], [9.6, "off", n]]
-    return ev
+def lush_strings(off):
+    # 007 LUSH STRINGS: Dm7 - Gm7 - C - A7 with a violin line on top, the voices kept together
+    prog = [(50, 57, 60, 65), (55, 58, 62, 65), (48, 55, 60, 64), (57, 61, 64, 67)]
+    it = []
+    for k, ch in enumerate(prog):
+        it += C(k * 3, 3.0, ch, 92)
+    top = [N(0, 1.5, 74), N(1.5, 1.5, 77), N(3, 1, 79), N(4, .5, 77), N(4.5, 1.5, 74), N(6, 1.5, 72),
+           N(7.5, 1.5, 76), N(9, 1.5, 79), N(10.5, 1.5, 81)]
+    return score(84, it + top, off, legato=1.0)
 
 
-def ufo_sweep():
-    # UFO: mono sweeps up and down, legato, with the preset's delay and reverb
-    up = list(range(36, 85, 4))
-    line = (up + up[-2::-1]) * 2
-    return mono(line, 0.2, 0.14) + [[7.6, "on", 60, 100], [9.6, "off", 60]]
+def aura_atmos(off):
+    # 008 AURA ATMOS: a cluster that turns into another, a glassy motif on top, the bell figure on the offbeats
+    it = C(0, 5.0, (60, 64, 67, 71, 74, 77), 88) + C(5, 5.0, (62, 67, 69, 71, 74, 79), 88)
+    it += [N(1.5, .25, 84, 96), N(3.0, .25, 88, 96), N(4.25, .5, 86, 96), N(6.5, .25, 79, 96),
+           N(7.5, .25, 83, 96), N(8.75, .5, 86, 96)]
+    return score(72, it, off, legato=1.0)
+
+
+def ufo_sweep(off):
+    # 009 UFO: a mono theremin-like line, long glides up and down, legato joins where the next note starts first
+    it = [N(0, 1.6, 76), N(1.4, 1.2, 71), N(2.5, 1.0, 79), N(3.4, 1.2, 74), N(4.5, 2.0, 83),
+          N(6.5, .5, 81), N(7.0, .5, 76), N(7.5, 1.6, 64), N(9.0, .5, 69)]
+    return score(72, it, off, legato=1.06)
 
 
 SAMPLES = [
-    ("000", "mini-lead", melody_lead),
-    ("001", "moog-bass", bass_line),
-    ("002", "pluck-arp", arp_chords),
+    ("000", "mini-lead", mini_lead),
+    ("001", "moog-bass", moog_bass),
+    ("002", "pluck-arp", pluck_arp),
     ("003", "pad-swell", pad_swell),
     ("004", "sine-solo", sine_solo),
     ("005", "space-drone", space_drone),
@@ -168,7 +182,7 @@ def main():
     tmp = pathlib.Path(tempfile.mkdtemp(prefix="fmini_samples_"))
     scen = []
     for i, (num, slug, fn) in enumerate(SAMPLES):
-        scen.append(dict(id=num, preset=i, dur=DUR, events=fn()))
+        scen.append(dict(id=num, preset=i, dur=DUR, events=fn(HEARD_OFFSET[i])))
         assert bank.p[i]["name"] is not None
     (tmp / "scen.json").write_text(json.dumps(scen))
     subprocess.run(["node", str(HERE / "preset_lab.mjs"), a.wasm, str(tmp / "scen.json"), str(tmp / "wav")], check=True)
