@@ -136,6 +136,26 @@
   .feat .n { font: 600 13px/1 var(--mono); color: var(--or); }
   .feat h3 { margin: 12px 0 8px; font-size: 19px; line-height: 1.25; font-weight: 700; letter-spacing: -.01em; }
   .feat p { margin: 0; color: var(--dim); font-size: 15.5px; line-height: 1.6; }
+  /* the sound samples: a white player per sample, a play button that turns into stop */
+  .samples { margin-top: 72px; }
+  .smp-h { margin: 0; font-size: 24px; letter-spacing: -.01em; font-weight: 800; }
+  .smp-l { margin: 10px 0 0; color: var(--dim); max-width: 760px; }
+  .smp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 22px; margin-top: 28px; }
+  @media (max-width: 700px) { .smp-grid { grid-template-columns: 1fr; } }
+  .smp { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; display: flex; flex-direction: column; }
+  .smp-id { display: flex; align-items: baseline; gap: 10px; }
+  .smp-id span { font: 600 13px/1 var(--mono); color: var(--or); }
+  .smp-id b { font-size: 17px; font-weight: 700; }
+  .smp-d { margin: 8px 0 14px; color: var(--dim); font-size: 15px; line-height: 1.5; }
+  .player { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 10px; padding: 9px 12px; margin-top: auto; }
+  .pbtn { flex: 0 0 46px; width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--or); color: #1a0e05; display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .pbtn:hover { background: var(--or2); }
+  .pbtn svg { width: 20px; height: 20px; fill: currentColor; grid-area: 1 / 1; }
+  .pbtn .i-stop { display: none; }
+  .pbtn[aria-pressed="true"] .i-play { display: none; }
+  .pbtn[aria-pressed="true"] .i-stop { display: block; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .wave { flex: 1 1 auto; min-width: 0; width: 100%; height: 56px; display: block; }
 
   /* screens */
   .viewer { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 56px; align-items: center; margin-top: 48px; }
@@ -347,6 +367,93 @@
       <article class="feat"><span class="n">04</span><h3 data-t="f4t"></h3><p data-t="f4d"></p></article>
       <article class="feat"><span class="n">05</span><h3 data-t="f5t"></h3><p data-t="f5d"></p></article>
       <article class="feat"><span class="n">06</span><h3 data-t="f6t"></h3><p data-t="f6d"></p></article>
+    </div>
+
+    <div class="samples">
+      <h3 class="smp-h" data-t="smp_h"></h3>
+      <p class="smp-l" data-t="smp_l"></p>
+      <div class="smp-grid">
+      <article class="smp">
+        <div class="smp-id"><span>000</span><b>MINI LEAD</b></div>
+        <p class="smp-d" data-t="smp0"></p>
+        <div class="player" data-src="sounds/000-mini-lead.mp3" data-i="0">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>001</span><b>MOOG BASS</b></div>
+        <p class="smp-d" data-t="smp1"></p>
+        <div class="player" data-src="sounds/001-moog-bass.mp3" data-i="1">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>002</span><b>PLUCK ARP</b></div>
+        <p class="smp-d" data-t="smp2"></p>
+        <div class="player" data-src="sounds/002-pluck-arp.mp3" data-i="2">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>003</span><b>PAD SWELL</b></div>
+        <p class="smp-d" data-t="smp3"></p>
+        <div class="player" data-src="sounds/003-pad-swell.mp3" data-i="3">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>004</span><b>SINE SOLO</b></div>
+        <p class="smp-d" data-t="smp4"></p>
+        <div class="player" data-src="sounds/004-sine-solo.mp3" data-i="4">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>005</span><b>SPACE DRONE</b></div>
+        <p class="smp-d" data-t="smp5"></p>
+        <div class="player" data-src="sounds/005-space-drone.mp3" data-i="5">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>006</span><b>CS-80 BRASS</b></div>
+        <p class="smp-d" data-t="smp6"></p>
+        <div class="player" data-src="sounds/006-cs80-brass.mp3" data-i="6">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>007</span><b>LUSH STRINGS</b></div>
+        <p class="smp-d" data-t="smp7"></p>
+        <div class="player" data-src="sounds/007-lush-strings.mp3" data-i="7">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>008</span><b>AURA ATMOS</b></div>
+        <p class="smp-d" data-t="smp8"></p>
+        <div class="player" data-src="sounds/008-aura-atmos.mp3" data-i="8">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="smp">
+        <div class="smp-id"><span>009</span><b>UFO</b></div>
+        <p class="smp-d" data-t="smp9"></p>
+        <div class="player" data-src="sounds/009-ufo.mp3" data-i="9">
+          <button type="button" class="pbtn" aria-pressed="false"><span class="sr" data-t="smp_play"></span><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="i-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg></button>
+          <canvas class="wave" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      </div>
     </div>
   </section>
 
@@ -572,6 +679,7 @@ const SITE = {
     h_install: "Instalar", l_install: "O instalador roda aqui mesmo, no navegador: reconhece se o aparelho é um FM-1 ou um SMK-37 e grava o firmware certo pelo cabo USB.",
     try_fm1: "emulador", try_smk: "emulador",
     nav_man: "Manual",
+    smp_h: "Amostras dos primeiros presets", smp_l: "Dez amostras de 10 segundos, gravadas pelo próprio firmware, cada uma com uma linha que mostra o timbre. Toque para ouvir; toque de novo para parar.", smp_play: "Tocar", smp_stop: "Parar", smp0: "Lead monofônico com portamento: uma frase curta, com o deslizamento entre as notas.", smp1: "Baixo grave e cheio: uma linha de oito notas, com a fundamental bem marcada.", smp2: "Arpejador: um acorde menor segurado, que o arpejador toca em ordem; depois, outro acorde.", smp3: "Pad que abre devagar: quatro acordes que se sobrepõem, com ataque lento.", smp4: "Lead suave, quase senoidal: notas longas e uma melodia cantada.", smp5: "Drone: notas graves que se movem devagar, sem fim.", smp6: "Metais polifônicos: acordes curtos e marcados, à maneira dos metais analógicos.", smp7: "Cordas ricas: uma progressão lenta, com as vozes ligadas.", smp8: "Atmosfera: um cluster de notas que se transforma aos poucos.", smp9: "Efeito: varreduras de notas para cima e para baixo, com o delay e a reverberação do preset.",
   },
   en: {
     nav_f: "Sound", nav_s: "Screens", nav_ft: "Features", nav_ed: "Editor", nav_i: "Install",
@@ -618,6 +726,7 @@ const SITE = {
     h_install: "Install", l_install: "The installer runs right here, in the browser: it recognises whether the device is an FM-1 or an SMK-37 and writes the right firmware over the USB cable.",
     try_fm1: "emulator", try_smk: "emulator",
     nav_man: "Manual",
+    smp_h: "Samples of the first presets", smp_l: "Ten 10-second samples, rendered by the firmware itself, each with a short line that shows the sound. Press to listen; press again to stop.", smp_play: "Play", smp_stop: "Stop", smp0: "Monophonic lead with glide: a short phrase, the notes slide into each other.", smp1: "Deep, full bass: an eight-note line with a strong fundamental.", smp2: "Arpeggiator: a held minor chord, played in order by the arpeggiator; then another chord.", smp3: "A slow-opening pad: four overlapping chords with a slow attack.", smp4: "A soft lead, almost a sine wave: long notes and a singing melody.", smp5: "Drone: low notes that move slowly, with no end.", smp6: "Polyphonic brass: short, punchy chords, like analogue brass.", smp7: "Rich strings: a slow progression with the voices kept together.", smp8: "Atmosphere: a cluster of notes that slowly changes.", smp9: "Effect: sweeps of notes up and down, with the preset's delay and reverb.",
   },
 };
 for (const l in SITE) Object.assign(TEXT[l], SITE[l]);
@@ -697,6 +806,50 @@ function applyLang() {
   renderSite();
 }
 $("tipx").addEventListener("click", () => { $("tip").hidden = true; });
+/* the sound samples (sounds/, made by tools/fmini_samples.py): one at a time; the bars show the waveform, the played part orange */
+(() => {
+  const pls = [...document.querySelectorAll(".player")].map((el) => ({ el, btn: el.querySelector(".pbtn"), cv: el.querySelector("canvas"), a: null, peaks: null, prog: 0 }));
+  if (!pls.length) return;
+  let playing = null;
+  const draw = (p) => {
+    const cv = p.cv, dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    if (!w || !h) return;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext("2d"), n = 120, bw = w / n;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, w, h);
+    for (let i = 0; i < n; i++) {
+      const v = p.peaks ? p.peaks[i] : 0.12;
+      const bh = Math.max(2, v * h * 0.92), x = i * bw;
+      g.fillStyle = i / n < p.prog ? "#ff7a1a" : "#c9c4cf";
+      g.fillRect(x + bw * 0.2, (h - bh) / 2, Math.max(1, bw * 0.6), bh);
+    }
+  };
+  const setState = (p, on) => { p.btn.setAttribute("aria-pressed", on ? "true" : "false"); };
+  const stop = (p) => {
+    if (p.a) { p.a.pause(); p.a.currentTime = 0; }
+    p.prog = 0; setState(p, false); draw(p);
+    if (playing === p) playing = null;
+  };
+  pls.forEach((p) => {
+    p.a = new Audio(p.el.dataset.src);
+    p.a.preload = "none";
+    p.btn.addEventListener("click", () => {
+      if (!p.a.paused) { stop(p); return; }
+      if (playing && playing !== p) stop(playing);
+      playing = p;
+      p.a.play().then(() => setState(p, true)).catch(() => { stop(p); });
+    });
+    p.a.addEventListener("timeupdate", () => { p.prog = p.a.duration ? p.a.currentTime / p.a.duration : 0; draw(p); });
+    p.a.addEventListener("ended", () => stop(p));
+    p.a.addEventListener("pause", () => { if (p.a.currentTime === 0 || p.a.ended) setState(p, false); });
+    draw(p);
+  });
+  window.addEventListener("resize", () => pls.forEach(draw));
+  fetch("sounds/samples.json").then((r) => r.json()).then((j) => {
+    pls.forEach((p) => { const s = j.samples[+p.el.dataset.i]; if (s) p.peaks = s.peaks; draw(p); });
+  }).catch(() => { /* no waveform: the flat bars stay */ });
+})();
 /* "Try in browser": the two emulators, FM-1 and SMK-37 */
 $("trybtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("trymenu").hidden; $("trymenu").hidden = !open; $("trybtn").setAttribute("aria-expanded", String(open)); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); });
 $("manbtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("manmenu").hidden; $("manmenu").hidden = !open; $("manbtn").setAttribute("aria-expanded", String(open)); $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); });
