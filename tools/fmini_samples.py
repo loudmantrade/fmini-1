@@ -139,17 +139,20 @@ def pad_swell(off):
 
 
 def sine_solo(off):
-    # 004 SINE SOLO: a blues-rock solo in A, 110 bpm, shuffle eighths: the minor pentatonic with the blue Eb, call and
-    # response phrases over A7 and D7, a bent-free line that ends on a held A5. No pitch bend.
-    bpm = 110
-    it = [N(0.0, 1.0, 69, 110), N(1.0, .667, 72), N(1.667, .333, 74), N(2.0, 1.0, 75, 120),   # the call: A C D Eb
-          N(3.0, .667, 74), N(3.667, .333, 72),
-          N(4.0, .5, 74, 110), N(4.5, .5, 76), N(5.0, 1.5, 79, 120), N(6.5, .5, 76), N(7.0, 1.0, 74),  # D7: E, G held
-          N(8.0, .5, 81, 115), N(8.5, .5, 79), N(9.0, .333, 75), N(9.333, .333, 76), N(9.667, .333, 74),  # the answer
-          N(10.0, 1.0, 72), N(11.0, 1.0, 69, 110),
-          N(12.0, .5, 72), N(12.5, .5, 74), N(13.0, .333, 75), N(13.333, .333, 76), N(13.667, .333, 79),  # the turn
-          N(14.0, 2.0, 81, 127)]                                                                       # the held A5
-    return score(bpm, it, off, legato=0.95)
+    # 004 SINE SOLO: a fast blues-rock solo in A, 140 bpm: sixteenth runs and triplet runs through the minor pentatonic
+    # with the blue Eb, a fast descent, and a final run ending on a held A5. No pitch bend.
+    bpm = 140
+    it = []
+    it += run(0.0, .25, [69, 72, 74, 75, 74, 72, 69, 72])                 # sixteenths up, with the blue Eb
+    it += run(2.0, .25, [76, 74, 72, 69, 67, 69, 72, 74])                 # sixteenths down
+    it += run(4.0, 1 / 3, [79, 76, 74, 72, 74, 76, 79, 81, 79])           # triplets
+    it += run(7.0, .25, [81, 79, 75, 76, 74, 72, 74, 76])                 # the fast answer
+    it += run(9.0, .25, [74, 72, 69, 67, 69, 72, 74, 75])                 # the fall, the blue note again
+    it += run(11.0, 1 / 3, [76, 79, 81, 79, 76, 74, 72, 69, 72])          # triplets, up and down
+    it += run(14.0, .25, [69, 72, 74, 75, 76, 79, 81, 79])                # the last climb
+    it += [N(16.0, .5, 79, 115), N(16.5, .5, 76), N(17.0, .25, 74), N(17.25, .25, 75), N(17.5, .5, 74),
+           N(18.0, 3.0, 69, 127)]                                          # the turn, the held A4 at the end
+    return score(bpm, it, off, legato=0.85)
 
 
 def space_drone(off):
