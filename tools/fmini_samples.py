@@ -139,18 +139,17 @@ def pad_swell(off):
 
 
 def sine_solo(off):
-    # 004 SINE SOLO: a soul ballad in Bb, 84 bpm, laid back: scooped entries, a melisma, a held D5 with a vibrato, a
-    # phrase that sits behind the beat, and a run that ends on a held G5 dropped away
-    bpm = 84
-    T = lambda b: START + b * 60.0 / bpm
-    it = [N(0.5, 1.5, 70, 100), N(2.0, .5, 72), N(2.5, .5, 74), N(3.0, 1.5, 75),           # the scooped Bb4, the lift
-          N(4.5, .25, 77), N(4.75, .25, 79), N(5.0, .25, 77), N(5.25, .25, 75), N(5.5, 2.0, 74),   # the melisma, D5
-          N(7.5, .5, 72), N(8.0, .5, 70), N(8.5, .75, 67), N(9.25, .75, 70),                       # behind the beat
-          N(10.0, .25, 72), N(10.25, .25, 74), N(10.5, .25, 75), N(10.75, .25, 77), N(11.0, 1.5, 79)]  # the run to G5
-    bends = [(0.0, 0.0), (T(0.5), -2.0), (T(0.8), 0.0),                                         # the scoop into Bb4
-             (T(3.0), 0.0), (T(3.4), -0.3), (T(3.8), 0.0)] + vibrato(T(5.5), T(7.5), 0.4, 0.6)[:-1]
-    bends += [(T(7.5), 0.0), (T(12.3), -2.0), (T(12.5), 0.0)]                                    # the drop at the end
-    return score(bpm, it, off, legato=0.96) + bend_path(sorted(bends))
+    # 004 SINE SOLO: a blues-rock solo in A, 110 bpm, shuffle eighths: the minor pentatonic with the blue Eb, call and
+    # response phrases over A7 and D7, a bent-free line that ends on a held A5. No pitch bend.
+    bpm = 110
+    it = [N(0.0, 1.0, 69, 110), N(1.0, .667, 72), N(1.667, .333, 74), N(2.0, 1.0, 75, 120),   # the call: A C D Eb
+          N(3.0, .667, 74), N(3.667, .333, 72),
+          N(4.0, .5, 74, 110), N(4.5, .5, 76), N(5.0, 1.5, 79, 120), N(6.5, .5, 76), N(7.0, 1.0, 74),  # D7: E, G held
+          N(8.0, .5, 81, 115), N(8.5, .5, 79), N(9.0, .333, 75), N(9.333, .333, 76), N(9.667, .333, 74),  # the answer
+          N(10.0, 1.0, 72), N(11.0, 1.0, 69, 110),
+          N(12.0, .5, 72), N(12.5, .5, 74), N(13.0, .333, 75), N(13.333, .333, 76), N(13.667, .333, 79),  # the turn
+          N(14.0, 2.0, 81, 127)]                                                                       # the held A5
+    return score(bpm, it, off, legato=0.95)
 
 
 def space_drone(off):
