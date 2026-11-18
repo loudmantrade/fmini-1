@@ -1112,7 +1112,7 @@ static void fa_cfg_defaults(void)                         /* GLOBAL's settings a
     fm_vel_sens = 0;
     fm_bt = 0;
     fa_clk = 0;
-    glo_note_prio = 1;
+    glo_note_prio = 0;                      /* LAST: the default (2.6.3) */
     fa_tune_hz = 440;
     glo_tune_c = 0;
     glo_transpose = 0;
@@ -1129,8 +1129,8 @@ static void fa_cfg_load(void)
         {   uint32_t vb = *fa_cfg_byte(23u + FA_NCC);   /* VELOCITY SENS. as the last sound had it: 0xD0 | v; else OFF */
             fm_vel_sens = (uint8_t)((vb & 0xFEu) == 0xD0u ? vb & 1u : 0u);
         }
-        {   uint32_t np = *fa_cfg_byte(20u + FA_NCC);   /* NOTE PRIORITY 0 LAST, 1 LOW, 2 HIGH; erased (0xFF): LOW */
-            glo_note_prio = (uint8_t)(np <= 2u ? np : 1u);
+        {   uint32_t np = *fa_cfg_byte(20u + FA_NCC);   /* NOTE PRIORITY 0 LAST, 1 LOW, 2 HIGH; erased (0xFF): LAST, the default */
+            glo_note_prio = (uint8_t)(np <= 2u ? np : 0u);
         }
         {   uint32_t b = *fa_cfg_byte(17u + FA_NCC);   /* 0xC0 | clock; an erased byte (0xFF) reads OFF */
             fa_clk = (b & 0xFCu) == 0xC0u && (b & 3u) < FA_NCLK ? (uint8_t)(b & 3u) : 0u;

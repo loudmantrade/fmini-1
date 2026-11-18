@@ -397,7 +397,7 @@ static void mono_remove(track_t *t, uint32_t note)
 }
 
 int32_t glo_tune_c = 0, glo_transpose = 0;          /* core.h: the GLO list's TUNING and TRANSPOSE */
-uint8_t glo_note_prio = 1;                          /* core.h: the GLO list's NOTE PRIORITY (LOW) */
+uint8_t glo_note_prio = 0;                          /* core.h: the GLO list's NOTE PRIORITY (LAST, the default since 2.6.3) */
 
 /* the note as it sounds: TRANSPOSE applied; -1 when it falls outside MIDI's 0..127 (then the note is dropped, on and off alike) */
 static int32_t trk_xnote(uint32_t note)

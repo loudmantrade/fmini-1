@@ -1284,7 +1284,7 @@ int main(int argc, char **argv)
         fa_buttons(save);
         if (fa_gl) { printf("reset: GLOBAL still open\n"); return 1; }
         if (str_eq(ENGINES[ENGI_FMINI]->presets[150].name, "MY PATCH") || !str_eq(ENGINES[ENGI_FMINI]->presets[150].name, FMINI_PRESETS[150].name)) { printf("reset: preset 150 not the factory's\n"); return 1; }
-        if (fa_tune_hz != 440 || glo_transpose != 0 || glo_note_prio != 1 || fm_midi_ch != 0) { printf("reset: GLOBAL's settings kept\n"); return 1; }
+        if (fa_tune_hz != 440 || glo_transpose != 0 || glo_note_prio != 0 || fm_midi_ch != 0) { printf("reset: GLOBAL's settings kept\n"); return 1; }
         ui.force = 1; fa_draw(); dump(dir, 943);           /* RESET DONE */
     }
     printf("fmini_app_test: ok\n");
