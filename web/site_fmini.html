@@ -45,6 +45,8 @@
   header.nav nav .trymenu a { display: flex; align-items: baseline; gap: 10px; color: var(--fg); padding: 10px 12px; border-radius: 8px; font-weight: 600; }
   header.nav nav .trymenu a small { color: var(--mute); font: 500 11.5px/1 var(--mono); }
   header.nav nav .trymenu a:hover { background: var(--surface2); }
+  header.nav nav .trymenu a { white-space: nowrap; }
+  header.nav nav #manmenu { min-width: 300px; }
   header.nav nav a.donate { color: var(--or2); }
   /* a phone: the section links go, the emulator's ("Try in browser") and Install stay; on a narrow one the short label */
   @media (max-width: 720px) {
@@ -280,6 +282,8 @@
       <a href="editor/" data-t="nav_ed"></a>
       <div class="trywrap"><button type="button" class="try" id="trybtn" aria-haspopup="true" aria-expanded="false"><span class="tl" data-t="nav_try"></span><span class="ts" data-t="nav_try_s"></span><span class="car">▾</span></button>
         <div class="trymenu" id="trymenu" hidden><a href="emu/">FM-1 <small data-t="try_fm1"></small></a><a href="emu/smk/">SMK-37 <small data-t="try_smk"></small></a></div></div>
+      <div class="trywrap"><button type="button" class="try" id="manbtn" aria-haspopup="true" aria-expanded="false"><span data-t="nav_man"></span><span class="car">▾</span></button>
+        <div class="trymenu" id="manmenu" hidden><a href="manual/fm1/">FM-1 <small data-t="man_fm1"></small></a><a href="manual/smk37/">SMK-37 <small data-t="man_smk"></small></a></div></div>
       <a href="https://ko-fi.com/ruppert" class="try donate" target="_blank" rel="noopener"><span class="tl" data-t="donate"></span><span class="ts" data-t="donate_s"></span></a>
       <a href="#install" class="keep" data-t="nav_i"></a>
     </nav>
@@ -567,6 +571,7 @@ const SITE = {
     ft9t: "Emuladores online", ft9d: "Experimente o FMini-1 no navegador, no FM-1 ou no SMK-37, sem instalar nada.",
     h_install: "Instalar", l_install: "O instalador roda aqui mesmo, no navegador: reconhece se o aparelho é um FM-1 ou um SMK-37 e grava o firmware certo pelo cabo USB.",
     try_fm1: "emulador", try_smk: "emulador",
+    nav_man: "Manual", man_fm1: "guia do painel e das páginas", man_smk: "beta · painel e MIDI",
   },
   en: {
     nav_f: "Sound", nav_s: "Screens", nav_ft: "Features", nav_ed: "Editor", nav_i: "Install",
@@ -612,6 +617,7 @@ const SITE = {
     ft9t: "Online emulators", ft9d: "Try the FMini-1 in your browser, on the FM-1 or the SMK-37, with nothing to install.",
     h_install: "Install", l_install: "The installer runs right here, in the browser: it recognises whether the device is an FM-1 or an SMK-37 and writes the right firmware over the USB cable.",
     try_fm1: "emulator", try_smk: "emulator",
+    nav_man: "Manual", man_fm1: "panel and pages guide", man_smk: "beta · panel and MIDI",
   },
 };
 for (const l in SITE) Object.assign(TEXT[l], SITE[l]);
@@ -692,9 +698,10 @@ function applyLang() {
 }
 $("tipx").addEventListener("click", () => { $("tip").hidden = true; });
 /* "Try in browser": the two emulators, FM-1 and SMK-37 */
-$("trybtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("trymenu").hidden; $("trymenu").hidden = !open; $("trybtn").setAttribute("aria-expanded", String(open)); });
-document.addEventListener("click", (e) => { if (!$("trymenu").hidden && !e.target.closest(".trywrap")) { $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); } });
-addEventListener("keydown", (e) => { if (e.key === "Escape") { $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); } });
+$("trybtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("trymenu").hidden; $("trymenu").hidden = !open; $("trybtn").setAttribute("aria-expanded", String(open)); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); });
+$("manbtn").addEventListener("click", (e) => { e.stopPropagation(); const open = $("manmenu").hidden; $("manmenu").hidden = !open; $("manbtn").setAttribute("aria-expanded", String(open)); $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); });
+document.addEventListener("click", (e) => { if (!e.target.closest(".trywrap")) { $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); } });
+addEventListener("keydown", (e) => { if (e.key === "Escape") { $("trymenu").hidden = true; $("trybtn").setAttribute("aria-expanded", "false"); $("manmenu").hidden = true; $("manbtn").setAttribute("aria-expanded", "false"); } });
 $("tip").addEventListener("click", (e) => { if (e.target.id === "tip") $("tip").hidden = true; });
 $("lang").addEventListener("click", () => {
   lang = LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];

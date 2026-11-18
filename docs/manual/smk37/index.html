@@ -1,0 +1,379 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-only
+     FMini-1 user manual, SMK-37 (the site's look; the emulator's top bar) -->
+<html lang="pt-BR" class="lang-pt" data-title-pt="Manual do SMK-37 — FMini-1" data-title-en="SMK-37 manual — FMini-1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="FMini-1 user manual for the M-VAVE SMK-37 (Pro, Elite and MKE-P37): the panel, the 16 pads, the knob and fader banks, MIDI, installation and the safety notes.">
+<title>Manual do SMK-37 — FMini-1</title>
+<link rel="stylesheet" href="../manual.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../../" aria-label="FMini-1"><i>FM</i>ini-<i>1</i><small>SMK-37</small></a>
+    <nav>
+      <a href="../../" data-l="pt">Site oficial</a><a href="../../" data-l="en">Official site</a>
+      <a href="../fm1/" class="hide-s">FM-1 <span data-l="pt">manual</span><span data-l="en">manual</span></a>
+      <a href="../smk37/" class="cur hide-s">SMK-37 <span data-l="pt">manual</span><span data-l="en">manual</span></a>
+      <a href="https://ko-fi.com/ruppert" class="donate" target="_blank" rel="noopener"><span data-l="pt">Apoiar ☕</span><span data-l="en">Support us ☕</span></a>
+    </nav>
+    <button class="lang" id="lang" type="button"></button>
+  </div>
+</header>
+
+<main>
+<div class="doc hero">
+  <p class="kick" data-l="pt">Manual do usuário · M-VAVE SMK-37</p>
+  <p class="kick" data-l="en">User manual · M-VAVE SMK-37</p>
+  <h1 data-l="pt">FMini-1 no <span>SMK-37</span></h1>
+  <h1 data-l="en">FMini-1 on the <span>SMK-37</span></h1>
+  <p class="lead" data-l="pt">O mesmo som do FM-1 num controlador de 37 teclas: 16 pads para os presets, oito knobs, quatro faders, duas rodas e um conjunto maior de botões.</p>
+  <p class="lead" data-l="en">The same sound as the FM-1 on a 37-key controller: 16 pads for the presets, eight knobs, four faders, two wheels and a larger set of buttons.</p>
+  <div class="note warn" data-l="pt"><strong>Versão beta.</strong> Este firmware ainda não foi testado num SMK-37 real. Use-o por sua conta e risco, e faça o backup da memória antes de instalar (seção 2). As telas, os pop-ups e os presets são os mesmos do FM-1, descritos no <a href="../fm1/">manual do FM-1</a>.</div>
+  <div class="note warn" data-l="en"><strong>Beta version.</strong> This firmware has not yet been tested on a real SMK-37. Use it at your own risk, and back up the memory before installing (section 2). The screens, pop-ups and presets are the same as the FM-1's, described in the <a href="../fm1/">FM-1 manual</a>.</div>
+  <ul class="toc">
+    <li><a href="#inicio">1 · <span data-l="pt">Antes de começar</span><span data-l="en">Before you start</span></a></li>
+    <li><a href="#instalar">2 · <span data-l="pt">Instalação e segurança</span><span data-l="en">Installation and safety</span></a></li>
+    <li><a href="#painel">3 · <span data-l="pt">O painel</span><span data-l="en">The panel</span></a></li>
+    <li><a href="#controles">4 · <span data-l="pt">Controles</span><span data-l="en">Controls</span></a></li>
+    <li><a href="#bancos">5 · <span data-l="pt">Bancos de knobs e faders</span><span data-l="en">Knob and fader banks</span></a></li>
+    <li><a href="#pads">6 · Pads</a></li>
+    <li><a href="#midi">7 · MIDI</a></li>
+    <li><a href="#modelos">8 · <span data-l="pt">Modelos</span><span data-l="en">Models</span></a></li>
+    <li><a href="#duvidas">9 · <span data-l="pt">Dúvidas</span><span data-l="en">Questions</span></a></li>
+  </ul>
+</div>
+
+<div class="doc">
+
+<section class="sec" id="inicio">
+  <h2><span class="n">1</span><span data-l="pt">Antes de começar</span><span data-l="en">Before you start</span></h2>
+  <div data-l="pt">
+    <p class="intro">O SMK-37 tem o mesmo chip do FM-1, e por isso roda o mesmo firmware. A diferença está no painel: 37 teclas (C3 a C6), 16 pads, oito knobs, quatro faders e as rodas de pitch e modulação. Os controles do FM-1 (MASTER, PRESETS, SELECT, ALGORITHM e os quatro KNOB) estão nos knobs K1 a K4; os botões de página têm equivalentes no painel do SMK-37.</p>
+    <p>Os 27 teclas centrais (F3 a G5) tocam com velocidade, como no FM-1. As 10 teclas das pontas tocam as notas que faltam, uma a uma, também com velocidade.</p>
+  </div>
+  <div data-l="en">
+    <p class="intro">The SMK-37 has the same chip as the FM-1, so it runs the same firmware. The difference is the panel: 37 keys (C3 to C6), 16 pads, eight knobs, four faders and the pitch and modulation wheels. The FM-1's controls (MASTER, PRESETS, SELECT, ALGORITHM and the four KNOBs) are knobs K1 to K4; the page buttons have counterparts on the SMK-37 panel.</p>
+    <p>The 27 middle keys (F3 to G5) play with velocity, as on the FM-1. The 10 end keys play the remaining notes, one each, also with velocity.</p>
+  </div>
+</section>
+
+<section class="sec" id="instalar">
+  <h2><span class="n">2</span><span data-l="pt">Instalação e segurança</span><span data-l="en">Installation and safety</span></h2>
+  <div data-l="pt">
+    <ol class="steps">
+      <li><b>Faça um backup completo da memória flash</b> do teclado antes de qualquer coisa. O guia do kit <i>fm1-to-smk37</i> (seção 3 de <code>docs/02-update-and-recovery.md</code>) explica como.</li>
+      <li><b>Tenha à mão o pacote do fabricante</b> para o seu modelo e o atualizador dele. É o caminho de volta ao firmware de fábrica.</li>
+      <li><b>Conecte o SMK-37 ao computador por USB</b> e escolha, no site, o pacote do seu modelo (Pro, Elite ou MKE-P37). O instalador só grava o pacote do modelo conectado.</li>
+      <li><b>Siga o instalador</b> e não desligue o teclado durante a gravação.</li>
+    </ol>
+    <div class="note"><strong>Voltar ao original.</strong> Instale o pacote do fabricante para o seu modelo com o atualizador dele. Ele funciona direto, porque o pacote instalado mantém o nome do modelo do teclado.</div>
+    <h3>O que o primeiro início apaga</h3>
+    <ul>
+      <li>Na primeira vez, o FMini-1 apaga as configurações do firmware de fábrica e os dados de outros firmwares na área de dados compartilhada (o FMini-1 se marca como <code>SMK37DATAFMINI</code>).</li>
+      <li>Os 200 presets ficam na área de amostras do usuário. O mapeamento de teclas, knobs e faders do firmware de fábrica fica lá até o FMini-1 gravar o primeiro preset; depois disso, o firmware de fábrica refaz o mapeamento dele ao voltar.</li>
+      <li>O firmware nunca escreve a calibração do teclado, o pareamento Bluetooth nem as áreas de chaves. Essas áreas estão protegidas na compilação e no driver de flash.</li>
+    </ul>
+    <div class="note warn"><strong>Aviso.</strong> Instalar outro firmware é por sua conta e risco. Faça o backup antes.</div>
+  </div>
+  <div data-l="en">
+    <ol class="steps">
+      <li><b>Make a full backup of the keyboard's flash memory</b> before anything else. The guide of the <i>fm1-to-smk37</i> kit (section 3 of <code>docs/02-update-and-recovery.md</code>) explains how.</li>
+      <li><b>Have the manufacturer's package</b> for your model and its updater ready. That is the way back to the factory firmware.</li>
+      <li><b>Connect the SMK-37 to the computer by USB</b> and choose, on the site, the package for your model (Pro, Elite or MKE-P37). The installer writes only the package for the connected model.</li>
+      <li><b>Follow the installer</b> and do not switch the keyboard off during the write.</li>
+    </ol>
+    <div class="note"><strong>Going back to the original.</strong> Install the manufacturer's package for your model with its updater. It works directly, because the installed package keeps the keyboard's model name.</div>
+    <h3>What the first start clears</h3>
+    <ul>
+      <li>The first time, FMini-1 clears the factory firmware's settings and any other firmware's data in the shared data area (FMini-1's store is tagged <code>SMK37DATAFMINI</code>).</li>
+      <li>The 200 presets live in the user sample area. The factory firmware's key, knob and fader mapping stays there until FMini-1 first writes a preset; after that, the factory firmware rebuilds its own mapping when you go back.</li>
+      <li>The firmware never writes the keyboard's calibration, the Bluetooth pairing or the key areas. The flash map refuses them at compile time, and the flash driver again at run time.</li>
+    </ul>
+    <div class="note warn"><strong>Notice.</strong> Installing other firmware is at your own risk. Back up first.</div>
+  </div>
+</section>
+
+<section class="sec" id="painel">
+  <h2><span class="n">3</span><span data-l="pt">O painel</span><span data-l="en">The panel</span></h2>
+  <p class="intro" data-l="pt">O desenho mostra o painel do SMK-37 com os números dos grupos de controles. A legenda abaixo diz o que cada grupo faz.</p>
+  <p class="intro" data-l="en">The drawing shows the SMK-37 panel with the control groups numbered. The legend below says what each group does.</p>
+  <figure>
+    <div class="frame">
+      <img src="../img/smk37-device.webp" alt="M-VAVE SMK-37 panel" width="1872" height="827">
+      <svg class="ov" viewBox="0 0 1872 827" aria-hidden="true">
+        <g fill="#ff7a1a" stroke="#1a0e05" stroke-width="3">
+          <circle cx="142" cy="58" r="22"/><circle cx="417" cy="58" r="22"/><circle cx="791" cy="58" r="22"/>
+          <circle cx="1141" cy="58" r="22"/><circle cx="960" cy="214" r="22"/><circle cx="1566" cy="58" r="22"/>
+          <circle cx="1567" cy="312" r="20"/><circle cx="54" cy="300" r="20"/><circle cx="54" cy="600" r="20"/>
+        </g>
+        <g fill="#1a0e05" font-family="Inter, Helvetica, Arial, sans-serif" font-weight="800" font-size="24" text-anchor="middle">
+          <text x="142" y="67">1</text><text x="417" y="67">2</text><text x="791" y="67">3</text>
+          <text x="1141" y="67">4</text><text x="960" y="223">5</text><text x="1566" y="67">6</text>
+          <text x="1567" y="320">7</text><text x="54" y="308">8</text><text x="54" y="608">9</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b data-l="pt">Figura 1.</b><b data-l="en">Figure 1.</b> <span data-l="pt">O painel do SMK-37, numerado.</span><span data-l="en">The SMK-37 panel, numbered.</span></figcaption>
+  </figure>
+  <div data-l="pt">
+    <ol class="legend">
+      <li><b>PITCH e MOD</b>: a roda de pitch (à esquerda) e a de modulação (à direita).</li>
+      <li><b>A tela</b>: mostra as páginas e os pop-ups do FM-1.</li>
+      <li><b>K1 a K4</b>: MASTER (volume), PRESETS, SELECT e ALGORITHM. São os quatro controles de navegação e de volume.</li>
+      <li><b>K5 a K8</b>: quatro knobs, cujo papel depende do banco de KNOB BANK (seção 5).</li>
+      <li><b>Os 16 pads</b>: escolhem presets (seção 6).</li>
+      <li><b>F1 a F4</b>: faders, cujo papel depende do banco de FADER BANK (seção 5).</li>
+      <li><b>Os botões da direita</b>: ARP, REPEAT, SCALE, CHORD, GLOBE, BT (linha de cima) e PATCH, PARA, FX, SEQ, PLAY, REC (linha de baixo).</li>
+      <li><b>Os botões da esquerda</b>: KNOB BANK, FADER BANK, as setas ◄ ► (preset anterior e próximo) e OCT− e OCT+.</li>
+      <li><b>As 37 teclas</b>: C3 a C6. As 27 centrais (F3 a G5) têm velocidade; as das pontas tocam notas extras, uma a uma.</li>
+    </ol>
+  </div>
+  <div data-l="en">
+    <ol class="legend">
+      <li><b>PITCH and MOD</b>: the pitch wheel (left) and the modulation wheel (right).</li>
+      <li><b>The screen</b>: shows the FM-1's pages and pop-ups.</li>
+      <li><b>K1 to K4</b>: MASTER (volume), PRESETS, SELECT and ALGORITHM. The four navigation and volume controls.</li>
+      <li><b>K5 to K8</b>: four knobs whose role depends on the KNOB BANK (section 5).</li>
+      <li><b>The 16 pads</b>: pick presets (section 6).</li>
+      <li><b>F1 to F4</b>: faders, whose role depends on the FADER BANK (section 5).</li>
+      <li><b>The buttons on the right</b>: ARP, REPEAT, SCALE, CHORD, GLOBE, BT (top row) and PATCH, PARA, FX, SEQ, PLAY, REC (bottom row).</li>
+      <li><b>The buttons on the left</b>: KNOB BANK, FADER BANK, the ◄ ► arrows (previous and next preset) and OCT− and OCT+.</li>
+      <li><b>The 37 keys</b>: C3 to C6. The 27 middle ones (F3 to G5) have velocity; the end ones play extra notes, one each.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="sec" id="controles">
+  <h2><span class="n">4</span><span data-l="pt">Controles</span><span data-l="en">Controls</span></h2>
+  <div data-l="pt">
+    <p class="intro">Cada botão do SMK-37 leva a uma função do FM-1. Os nomes de cá são os do painel; as funções são as descritas no manual do FM-1.</p>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>SMK-37</th><th>No FMini-1</th></tr>
+      <tr><td class="k">K1 · MASTER</td><td>Volume geral (0 a 100 na tela).</td></tr>
+      <tr><td class="k">K2 · PRESETS</td><td>Troca o preset (000 a 199).</td></tr>
+      <tr><td class="k">K3 · SELECT</td><td>Move o cursor pelos controles da página.</td></tr>
+      <tr><td class="k">K4 · ALGORITHM</td><td>Muda o controle sob o cursor.</td></tr>
+      <tr><td class="k">K5 a K8</td><td>Quatro knobs, por KNOB BANK: FILT (padrão), CTRL (LFO), FX ou os quatro da página na tela (os KNOB 1 a 4 do FM-1). Ao girar, a tela mostra a página deles por 1 s; depois volta a página anterior.</td></tr>
+      <tr><td class="k">PATCH</td><td>HOME: a página FILT; fecha os pop-ups.</td></tr>
+      <tr><td class="k">PARA</td><td>EDIT: FILT; de novo, PRESET SETTINGS.</td></tr>
+      <tr><td class="k">SCALE</td><td>SCL: OSC; de novo, MIX. No pop-up de DELAY, toca o tempo.</td></tr>
+      <tr><td class="k">CHORD</td><td>ENV: F.ENV; de novo, A.ENV.</td></tr>
+      <tr><td class="k">REPEAT</td><td>LFO: CTRL.</td></tr>
+      <tr><td class="k">FX</td><td>FX; de novo, percorre os quatro pop-ups de efeito.</td></tr>
+      <tr><td class="k">GLOBE</td><td>GLO: o menu GLOBAL.</td></tr>
+      <tr><td class="k">BT</td><td>SAVE: o diálogo de salvar o preset.</td></tr>
+      <tr><td class="k">ARP · SEQ</td><td>Os pop-ups do arpejador e do sequenciador.</td></tr>
+      <tr><td class="k">SEQ PLAY · SEQ REC</td><td>PLAY e REC do sequenciador (seção 9 do manual do FM-1).</td></tr>
+      <tr><td class="k">OCT− · OCT+</td><td>Oitava para baixo e para cima.</td></tr>
+      <tr><td class="k">◄ · ►</td><td>Preset anterior e próximo, carregados ao soltar o botão. Segurados por 0,66 s, percorrem dez por segundo (o pop-up mostra onde estão).</td></tr>
+      <tr><td class="k">Roda de pitch</td><td>Pitch bend, pelo alcance do preset (PRESET SETTINGS). Também sai como MIDI.</td></tr>
+      <tr><td class="k">Roda de modulação</td><td>Como CC1 no FM-1 (o vibrato). Também sai como MIDI.</td></tr>
+      <tr><td class="k">OCT− + OCT+ ligados na energização</td><td>HARDWARE CALIBRATION: ensina os botões e os knobs de novo.</td></tr>
+    </table></div>
+  </div>
+  <div data-l="en">
+    <p class="intro">Each SMK-37 button leads to an FM-1 function. The names here are the panel's; the functions are the ones described in the FM-1 manual.</p>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>SMK-37</th><th>In FMini-1</th></tr>
+      <tr><td class="k">K1 · MASTER</td><td>Overall volume (0 to 100 on the screen).</td></tr>
+      <tr><td class="k">K2 · PRESETS</td><td>Changes the preset (000 to 199).</td></tr>
+      <tr><td class="k">K3 · SELECT</td><td>Moves the cursor over the page's controls.</td></tr>
+      <tr><td class="k">K4 · ALGORITHM</td><td>Changes the control under the cursor.</td></tr>
+      <tr><td class="k">K5 to K8</td><td>Four knobs, by KNOB BANK: FILT (default), CTRL (LFO), FX or the four of the page on the screen (the FM-1's KNOB 1 to 4). When you turn one, the screen shows its page for 1 s; then the previous page comes back.</td></tr>
+      <tr><td class="k">PATCH</td><td>HOME: the FILT page; closes the pop-ups.</td></tr>
+      <tr><td class="k">PARA</td><td>EDIT: FILT; again, PRESET SETTINGS.</td></tr>
+      <tr><td class="k">SCALE</td><td>SCL: OSC; again, MIX. In the DELAY pop-up, taps the tempo.</td></tr>
+      <tr><td class="k">CHORD</td><td>ENV: F.ENV; again, A.ENV.</td></tr>
+      <tr><td class="k">REPEAT</td><td>LFO: CTRL.</td></tr>
+      <tr><td class="k">FX</td><td>FX; again, goes through the four effect pop-ups.</td></tr>
+      <tr><td class="k">GLOBE</td><td>GLO: the GLOBAL menu.</td></tr>
+      <tr><td class="k">BT</td><td>SAVE: the save-preset dialog.</td></tr>
+      <tr><td class="k">ARP · SEQ</td><td>The arpeggiator and sequencer pop-ups.</td></tr>
+      <tr><td class="k">SEQ PLAY · SEQ REC</td><td>The sequencer's PLAY and REC (section 9 of the FM-1 manual).</td></tr>
+      <tr><td class="k">OCT− · OCT+</td><td>Octave down and up.</td></tr>
+      <tr><td class="k">◄ · ►</td><td>Previous and next preset, loaded when the button is released. Held for 0.66 s, they run at ten a second (the pop-up shows where they are).</td></tr>
+      <tr><td class="k">Pitch wheel</td><td>Pitch bend, by the preset's range (PRESET SETTINGS). Also sent as MIDI.</td></tr>
+      <tr><td class="k">Mod wheel</td><td>As MIDI CC1 on the FM-1 (vibrato). Also sent as MIDI.</td></tr>
+      <tr><td class="k">OCT− + OCT+ held at power-on</td><td>HARDWARE CALIBRATION: teaches the buttons and knobs again.</td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section class="sec" id="bancos">
+  <h2><span class="n">5</span><span data-l="pt">Bancos de knobs e faders</span><span data-l="en">Knob and fader banks</span></h2>
+  <div data-l="pt">
+    <p class="intro">K5 a K8 e os faders F1 a F4 podem mudar de função sem trocar de página. Dois botões escolhem o banco.</p>
+    <h3>KNOB BANK</h3>
+    <p>Escolhe o que K5 a K8 controlam. Cada aperto avança: <b>FILT</b> (o padrão), <b>CTRL</b> (o LFO), <b>FX</b> e, por último, a página que está na tela. Um pop-up mostra o banco escolhido por 1,2 s. A luz do botão acende quando o banco não é o padrão.</p>
+    <h3>FADER BANK</h3>
+    <p>Escolhe o que os faders F1 a F4 controlam. Cada aperto avança: <b>A.ENV</b> (o padrão), <b>F.ENV</b>, <b>MIX</b> e, por último, a página da tela. Um fader só assume quando você o move; ao mexer, a tela mostra a página dele por 1 s, como nos K5 a K8.</p>
+    <div class="flow">
+      <div class="box hl"><b>KNOB BANK</b>FILT → CTRL → FX → tela</div><div class="arr">→</div>
+      <div class="box"><b>K5 a K8</b>os quatro knobs do banco</div>
+      <div class="box hl"><b>FADER BANK</b>A.ENV → F.ENV → MIX → tela</div><div class="arr">→</div>
+      <div class="box"><b>F1 a F4</b>os quatro faders do banco</div>
+    </div>
+  </div>
+  <div data-l="en">
+    <p class="intro">K5 to K8 and the faders F1 to F4 can change their role without changing page. Two buttons choose the bank.</p>
+    <h3>KNOB BANK</h3>
+    <p>Chooses what K5 to K8 control. Each press goes on: <b>FILT</b> (the default), <b>CTRL</b> (the LFO), <b>FX</b> and, last, the page on the screen. A pop-up names the bank for 1.2 s. The button lights when the bank is not the default.</p>
+    <h3>FADER BANK</h3>
+    <p>Chooses what the faders F1 to F4 control. Each press goes on: <b>A.ENV</b> (the default), <b>F.ENV</b>, <b>MIX</b> and, last, the page on the screen. A fader takes over only once you move it; when it moves, the screen shows its page for 1 s, as K5 to K8 do.</p>
+    <div class="flow">
+      <div class="box hl"><b>KNOB BANK</b>FILT → CTRL → FX → screen</div><div class="arr">→</div>
+      <div class="box"><b>K5 to K8</b>the four knobs of the bank</div>
+      <div class="box hl"><b>FADER BANK</b>A.ENV → F.ENV → MIX → screen</div><div class="arr">→</div>
+      <div class="box"><b>F1 to F4</b>the four faders of the bank</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="pads">
+  <h2><span class="n">6</span>Pads</h2>
+  <div data-l="pt">
+    <p class="intro">Os 16 pads são o seletor de presets. Eles mostram os 16 presets da página em que está o preset carregado: o carregado acende em branco; os outros, em azul apagado. Apertar um pad carrega o preset dele.</p>
+    <p>No diálogo de SAVE, os pads escolhem o slot em que o preset será gravado.</p>
+    <p>Dentro do pop-up de SEQ, os pads mostram 16 dos 64 passos do sequenciador (a página do passo que toca, ou a do slot em que uma gravação entra). Um passo com nota aparece na cor da sua faixa: 1 a 16 em azul, 17 a 32 em vermelho, 33 a 48 em amarelo, 49 a 64 em verde. O passo que está tocando fica branco; os outros, apagados.</p>
+  </div>
+  <div data-l="en">
+    <p class="intro">The 16 pads are the preset picker. They show the 16 presets of the page the loaded preset is on: the loaded one lights white; the others show dim blue. Pressing a pad loads its preset.</p>
+    <p>In the SAVE dialog, the pads pick the slot the preset is written to.</p>
+    <p>Inside the SEQ pop-up, the pads show 16 of the sequencer's 64 steps (the page of the step that plays, or of the slot a recording goes into). A step with a note shows in its window's colour: 1 to 16 blue, 17 to 32 red, 33 to 48 yellow, 49 to 64 green. The step that plays is white; the others are dark.</p>
+  </div>
+</section>
+
+<section class="sec" id="midi">
+  <h2><span class="n">7</span>MIDI</h2>
+  <div data-l="pt">
+    <p class="intro">A entrada TRS do SMK-37 é uma saída de MIDI; não há entrada MIDI pelo TRS. O MIDI entra só pela USB (e o clock MIDI também).</p>
+    <h3>GLO &gt; MIDI SETTINGS</h3>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>Linha</th><th>Opções</th></tr>
+      <tr><td class="k">MIDI OUT</td><td>ALL (USB e a saída TRS; o padrão), USB ou TRS.</td></tr>
+      <tr><td class="k">MIDI OUT CH</td><td>1 a 16 (padrão 1): as teclas, as rodas e as notas do ARP e do SEQ.</td></tr>
+      <tr><td class="k">MIDI IN CH</td><td>ANY (padrão), ou 1 a 16.</td></tr>
+      <tr><td class="k">MIDI IN CC</td><td>O CC de cada controle.</td></tr>
+      <tr><td class="k">MIDI CLOCK</td><td>OFF ou USB.</td></tr>
+      <tr><td class="k">MIDI IN MONITOR</td><td>As últimas mensagens recebidas.</td></tr>
+    </table></div>
+    <h3>O que sai pelo MIDI OUT</h3>
+    <ul>
+      <li><b>As 37 teclas</b>: as notas com velocidade, no canal de MIDI OUT CH, com a oitava (OCT− e OCT+).</li>
+      <li><b>Os 16 pads</b>: as notas 36 a 43 (fileira de baixo) e 44 a 51 (fileira de cima), no canal 10, com velocidade e note-off. Eles continuam escolhendo presets.</li>
+      <li><b>K1 a K8</b>: CC 102 a 109 no canal de MIDI OUT CH, seja qual for a função deles no FMini-1. Cada encoder mantém um valor de 0 a 127, a partir de 64; o K1 é o 0 a 127 do MASTER.</li>
+      <li><b>Os faders 1 a 4</b>: CC 110 a 113 no canal de MIDI OUT CH, seja qual for o banco.</li>
+      <li><b>As rodas</b>: pitch bend, e o mod wheel como CC1.</li>
+    </ul>
+    <div class="note"><strong>Saída TRS.</strong> O driver da saída TRS segue o padrão do kit <i>fm1-to-smk37</i> (UART1 TX no PC7) e ainda não foi testado num aparelho. Diz-se que o conector é do tipo A; se um sintetizador não responder, tente um adaptador do tipo B.</div>
+  </div>
+  <div data-l="en">
+    <p class="intro">The SMK-37's TRS jack is a MIDI output; there is no TRS MIDI input. MIDI comes in over USB only (MIDI clock too).</p>
+    <h3>GLO &gt; MIDI SETTINGS</h3>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>Line</th><th>Options</th></tr>
+      <tr><td class="k">MIDI OUT</td><td>ALL (USB and the TRS jack; the default), USB or TRS.</td></tr>
+      <tr><td class="k">MIDI OUT CH</td><td>1 to 16 (default 1): the keys, the wheels, and the ARP and SEQ notes.</td></tr>
+      <tr><td class="k">MIDI IN CH</td><td>ANY (default), or 1 to 16.</td></tr>
+      <tr><td class="k">MIDI IN CC</td><td>The CC of each control.</td></tr>
+      <tr><td class="k">MIDI CLOCK</td><td>OFF or USB.</td></tr>
+      <tr><td class="k">MIDI IN MONITOR</td><td>The last messages received.</td></tr>
+    </table></div>
+    <h3>What MIDI OUT sends</h3>
+    <ul>
+      <li><b>The 37 keys</b>: their notes with velocity, on the MIDI OUT CH channel, with the octave (OCT− and OCT+).</li>
+      <li><b>The 16 pads</b>: notes 36 to 43 (the bottom row) and 44 to 51 (the top row), on channel 10, with velocity and note-off. They still pick presets.</li>
+      <li><b>K1 to K8</b>: CC 102 to 109 on the MIDI OUT CH channel, whatever they do in FMini-1. Each encoder keeps a value from 0 to 127, starting at 64; K1 is the MASTER's 0 to 127.</li>
+      <li><b>Faders 1 to 4</b>: CC 110 to 113 on the MIDI OUT CH channel, whatever bank they are in.</li>
+      <li><b>The wheels</b>: pitch bend, and the mod wheel as CC1.</li>
+    </ul>
+    <div class="note"><strong>TRS output.</strong> The TRS driver follows the pattern of the <i>fm1-to-smk37</i> kit (UART1 TX on PC7) and has not been tried on a unit. The jack is said to be type A; if a synth does not answer, try a type B adapter.</div>
+  </div>
+</section>
+
+<section class="sec" id="modelos">
+  <h2><span class="n">8</span><span data-l="pt">Modelos</span><span data-l="en">Models</span></h2>
+  <div data-l="pt">
+    <p class="intro">Os três modelos são o mesmo hardware. Cada pacote leva o nome do seu modelo, e o instalador só grava o pacote do modelo conectado.</p>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>Modelo</th><th>Pacote</th><th>Identidade</th></tr>
+      <tr><td class="k">SMK-37 Pro</td><td><code>fmini-1-smk37-…fwsc</code> (o padrão; também o Starrykey 37 Play)</td><td><code>SMK-37 Pro_900</code></td></tr>
+      <tr><td class="k">SMK-37 Elite</td><td><code>fmini-1-smk37-elite-…fwsc</code></td><td><code>SMK-37 Elite_900</code></td></tr>
+      <tr><td class="k">MKE-P37</td><td><code>fmini-1-smk37-mke-…fwsc</code></td><td><code>MKE-P37_900</code></td></tr>
+    </table></div>
+  </div>
+  <div data-l="en">
+    <p class="intro">The three models are the same hardware. Each package carries its model's name, and the installer writes only the package for the connected model.</p>
+    <div class="tbl-wrap"><table class="tbl">
+      <tr><th>Model</th><th>Package</th><th>Identity</th></tr>
+      <tr><td class="k">SMK-37 Pro</td><td><code>fmini-1-smk37-…fwsc</code> (the default; also the Starrykey 37 Play)</td><td><code>SMK-37 Pro_900</code></td></tr>
+      <tr><td class="k">SMK-37 Elite</td><td><code>fmini-1-smk37-elite-…fwsc</code></td><td><code>SMK-37 Elite_900</code></td></tr>
+      <tr><td class="k">MKE-P37</td><td><code>fmini-1-smk37-mke-…fwsc</code></td><td><code>MKE-P37_900</code></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section class="sec" id="duvidas">
+  <h2><span class="n">9</span><span data-l="pt">Dúvidas</span><span data-l="en">Questions</span></h2>
+  <div data-l="pt">
+    <h3>Não ouço nada</h3>
+    <ul>
+      <li>Suba o <b>K1 (MASTER)</b>: a tela mostra 0 a 100.</li>
+      <li>Confira a mixagem e o filtro na página MIX e FILT, como no FM-1.</li>
+      <li>Veja se o preset carregado tem nível (PRESET SETTINGS &gt; VOLUME).</li>
+    </ul>
+    <h3>Os faders ou os knobs K5 a K8 não fazem o que eu espero</h3>
+    <p>Confira o banco: o botão KNOB BANK ou FADER BANK acende quando o banco não é o padrão. Um pop-up mostra o banco escolhido por 1,2 s.</p>
+    <h3>Um preset não sai na tela ao apertar um pad</h3>
+    <p>Os pads só mostram os presets da página em que está o preset carregado. Se você quer outra página, use ◄ e ► para andar nos presets.</p>
+    <h3>O MIDI não responde</h3>
+    <p>Lembre que o SMK-37 não recebe MIDI pelo TRS. Confira o MIDI IN pela USB e os canais em GLO &gt; MIDI SETTINGS.</p>
+    <div class="note warn"><strong>Lembrete.</strong> Esta versão é beta e não foi testada num SMK-37 real. Se algo não se comportar como descrito, anote o modelo, a versão e o que aconteceu, e relate no repositório.</div>
+  </div>
+  <div data-l="en">
+    <h3>I hear nothing</h3>
+    <ul>
+      <li>Raise <b>K1 (MASTER)</b>: the screen shows 0 to 100.</li>
+      <li>Check the mix and the filter on the MIX and FILT pages, as on the FM-1.</li>
+      <li>Check the loaded preset has a level (PRESET SETTINGS &gt; VOLUME).</li>
+    </ul>
+    <h3>The faders or knobs K5 to K8 do not do what I expect</h3>
+    <p>Check the bank: the KNOB BANK or FADER BANK button lights when the bank is not the default. A pop-up names the bank for 1.2 s.</p>
+    <h3>A pad does not show the preset I want</h3>
+    <p>The pads only show the presets of the page the loaded preset is on. To go to another page, use ◄ and ► to walk through the presets.</p>
+    <h3>MIDI does not respond</h3>
+    <p>Remember the SMK-37 does not receive MIDI through the TRS jack. Check MIDI IN over USB and the channels in GLO &gt; MIDI SETTINGS.</p>
+    <div class="note warn"><strong>Reminder.</strong> This version is beta and has not been tested on a real SMK-37. If something does not behave as described, note the model, the version and what happened, and report it in the repository.</div>
+  </div>
+</section>
+
+<section class="sec" id="creditos">
+  <h2><span data-l="pt">Créditos</span><span data-l="en">Credits</span></h2>
+  <div data-l="pt"><p class="intro">A camada de placa do SMK-37 vem do kit <a href="https://github.com/genkigenki/fm1-to-smk37">fm1-to-smk37</a> (genkigenki/Felucca, ramo <code>smk37</code>). FMini-1 foi feito por Guilherme Ruppert, um fork do <a href="https://github.com/hugelton/Felucca">Felucca</a> de Leo Kuroshita (Hügelton Instruments), sob GPL-3.0.</p></div>
+  <div data-l="en"><p class="intro">The SMK-37 board layer comes from the <a href="https://github.com/genkigenki/fm1-to-smk37">fm1-to-smk37</a> kit (genkigenki/Felucca, branch <code>smk37</code>). FMini-1 was made by Guilherme Ruppert, a fork of <a href="https://github.com/hugelton/Felucca">Felucca</a> by Leo Kuroshita (Hügelton Instruments), under GPL-3.0.</p></div>
+</section>
+
+</div>
+
+<footer class="foot">
+  <div class="wrap">
+    <span data-l="pt">Manual do FMini-1 para o SMK-37 (beta).</span><span data-l="en">FMini-1 manual for the SMK-37 (beta).</span>
+    <nav>
+      <a href="../../" data-l="pt">Site oficial</a><a href="../../" data-l="en">Official site</a>
+      <a href="../fm1/">Manual do FM-1</a>
+      <a href="https://github.com/ruppert/fmini-1" data-l="pt">Código</a><a href="https://github.com/ruppert/fmini-1" data-l="en">Source</a>
+      <a href="https://ko-fi.com/ruppert" target="_blank" rel="noopener" data-l="pt">Apoiar ☕</a><a href="https://ko-fi.com/ruppert" target="_blank" rel="noopener" data-l="en">Support us ☕</a>
+    </nav>
+    <small data-l="pt">M-VAVE e SMK-37 são marcas de seus donos. FMini-1 não é afiliado nem endossado pela M-VAVE.</small>
+    <small data-l="en">M-VAVE and SMK-37 are trademarks of their owners. FMini-1 is not affiliated with or endorsed by M-VAVE.</small>
+  </div>
+</footer>
+</main>
+<script src="../manual.js"></script>
+</body>
+</html>
