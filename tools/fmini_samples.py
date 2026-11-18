@@ -64,18 +64,36 @@ def bend_path(points, step=0.02):
 
 # ---- the ten arrangements: a keyboardist's line for each patch, in the register it sounds in ----
 
+def run(b, step, ps, v=110):
+    """a fast run: one note every `step` beats, each a little shorter than the step (the key lifts a touch early)"""
+    return [N(b + k * step, step * 0.9, p, v) for k, p in enumerate(ps)]
+
+
 def mini_lead(off):
-    # 000 MINI LEAD: a mono line in A minor, syncopated, with a sixteenth run and a long landing
-    it = [N(0.5, .5, 69), N(1, .5, 72), N(1.5, 1, 76), N(2.5, .5, 74), N(3, .5, 72), N(3.5, .5, 71), N(4, 1, 69),
-          N(5.5, .5, 67), N(6, .5, 69), N(6.5, 1.5, 72), N(8, .5, 74), N(8.5, .25, 76), N(8.75, .25, 74),
-          N(9, .5, 72), N(9.5, .5, 71), N(10, 1.5, 69),
-          N(12, .25, 67), N(12.25, .25, 69), N(12.5, .25, 71), N(12.75, .25, 72), N(13, 1, 76), N(14, .5, 74),
-          N(14.5, .5, 71), N(15, 1, 69), N(16.5, 2.5, 69, 110)]
-    T = lambda b: START + b * 0.5   # 120 bpm: a beat is half a second
-    bends = [(0.0, 0.0), (T(1.5), -2.0), (T(1.5) + 0.2, 0.0),                    # scoop up into the E5
-             (T(7.0), 0.0), (T(7.9), -2.0), (T(8.0), 0.0),                     # fall off the C5 before the D5
-             (T(16.5) + 0.2, 0.0), (T(16.5) + 0.7, 1.0), (T(16.5) + 1.2, 0.0)]  # the last note bends up and back
-    return score(120, it, off, legato=0.95) + bend_path(bends)
+    # 000 MINI LEAD: a fast synth solo in the manner of a Wakeman lead, 160 bpm, E minor: sixteenth runs up and
+    # down, a fast arpeggio, a trill, a chromatic fall and a sweep, with bends on the held notes
+    bpm = 160
+    T = lambda b: START + b * 60.0 / bpm
+    it = []
+    it += run(0.0, .25, [64, 66, 67, 69, 71, 72, 74, 76])            # the E minor scale up, sixteenths
+    it += [N(2.0, 1.0, 76, 115)]                                      # a held E5, bent up and back
+    it += run(3.0, .25, [83, 79, 76, 71, 67, 69, 71, 74])             # the arpeggio down, then up
+    it += run(4.75, .25, [72, 73, 74, 75, 76, 77, 78, 79])           # a chromatic climb
+    it += run(6.5, .25, [79, 76, 79, 83])                             # the figure that turns
+    it += [N(7.25, .25, 81), N(7.5, .25, 83), N(7.75, .25, 81), N(8.0, .25, 83), N(8.25, 1.0, 84, 120)]   # the trill
+    it += run(9.5, .25, [84, 83, 82, 81, 80, 79, 78, 77])            # the chromatic fall
+    it += [N(11.25, 1.0, 76, 110)]                                    # E5, fall off with a bend down
+    it += [N(12.5, .25, 83), N(12.75, .25, 83), N(13.0, .25, 81), N(13.25, .5, 79), N(13.75, .25, 78), N(14.0, .5, 76)]
+    it += run(14.5, .25, [64, 67, 71, 76, 79, 83])                    # the big arpeggio up
+    it += [N(16.0, 1.0, 86, 120)]                                     # a high D6, scooped up into it
+    it += run(17.25, .25, [76, 79, 76, 83, 76, 79, 83, 86])           # the flurry
+    it += run(19.25, .25, [86, 84, 83, 81, 79, 76, 74, 72])           # the sweep down
+    it += [N(21.0, 3.0, 76, 120)]                                     # the last E5, bent down at the end
+    bends = [(0.0, 0.0), (T(2.0), 0.0), (T(2.3), 1.5), (T(2.8), 1.5), (T(3.0), 0.0),
+             (T(11.5), 0.0), (T(12.2), -2.0), (T(12.25), 0.0),
+             (T(16.0), -2.0), (T(16.3), 0.0),
+             (T(22.5), 0.0), (T(23.9), -2.0), (T(24.0), 0.0)]
+    return score(bpm, it, off, legato=0.92) + bend_path(bends)
 
 
 def moog_bass(off):
@@ -112,12 +130,22 @@ def pad_swell(off):
 
 
 def sine_solo(off):
-    # 004 SINE SOLO: a sung melody in D major, with grace notes, a rubato held note and a turn at the end
-    it = [N(0, 1.5, 74, 100), N(1.5, .5, 76), N(2, 1.0, 78), N(3, .5, 76), N(3.5, .5, 74), N(4, 1.0, 71),
-          N(5, .125, 73), N(5.125, .125, 74), N(5.25, .25, 71), N(5.5, 1.5, 74, 110),
-          N(7, .5, 78), N(7.5, .5, 76), N(8, .5, 74), N(8.5, .5, 71), N(9, 1.0, 69),
-          N(10, .25, 71), N(10.25, .25, 73), N(10.5, .25, 74), N(10.75, .25, 73), N(11, 1.0, 74, 110)]
-    return score(84, it, off, legato=0.96)
+    # 004 SINE SOLO: a jazzy solo over Dm7 - G7 - Cmaj7 - Am7 - D7 - G (at 130 bpm, swung eighths): chord tones with
+    # chromatic approach notes and blue notes (the flat third and the flat seventh), held and sung
+    bpm = 130
+    T = lambda b: START + b * 60.0 / bpm
+    it = [N(0.0, 1.0, 74), N(1.0, .667, 77), N(1.667, .333, 76), N(2.0, .667, 74), N(2.667, .333, 72),
+          N(3.0, 1.0, 70),                                           # the blue Bb4, resolved down
+          N(4.0, .667, 71), N(4.667, .333, 72), N(5.0, .667, 74), N(5.667, .333, 77), N(6.0, 1.0, 79),
+          N(7.0, .667, 78), N(7.667, .333, 77),                      # G7: the chromatic F#5 into F5
+          N(8.0, .667, 76), N(8.667, .333, 74), N(9.0, .667, 72), N(9.667, .333, 71), N(10.0, 1.0, 67),
+          N(11.0, .667, 69), N(11.667, .333, 71),                    # Cmaj7 and the walk to A
+          N(12.0, .667, 72), N(12.667, .333, 69), N(13.0, .667, 64), N(13.667, .333, 67), N(14.0, 1.0, 70, 110),
+          N(15.0, .667, 69), N(15.667, .333, 66),                    # Am7 - D7, the blue Bb4 on the D7
+          N(16.0, 1.0, 74, 115), N(17.0, .667, 71), N(17.667, .333, 69), N(18.0, 1.0, 74, 105)]   # home on D
+    bends = [(0.0, 0.0), (T(3.0), 0.0), (T(3.0) + 0.15, -0.5), (T(4.0), 0.0),
+             (T(14.0), -0.5), (T(14.0) + 0.2, 0.0), (T(18.0) + 0.6, 0.0), (T(18.0) + 0.9, -1.0)]
+    return score(bpm, it, off, legato=0.96) + bend_path(bends)
 
 
 def space_drone(off):
