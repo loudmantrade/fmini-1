@@ -1,11 +1,9 @@
-# FMini-1 on the M-Vave SMK-37 (beta)
+# FMini-1 on the M-Vave SMK-37
 
 FMini-1 also builds for the M-Vave SMK-37, a 37-key controller with the same chip as the FM-1. The FM-1 build is
 unchanged; everything for the SMK-37 is behind `BOARD_SMK37`. The board layer comes from the
 [fm1-to-smk37](https://github.com/genkigenki/fm1-to-smk37) kit (genkigenki/Felucca, branch `smk37`). The decisions
 behind the mapping are in [smk37-port.yaml](smk37-port.yaml).
-
-Nothing here has been tested on a real SMK-37 yet.
 
 ## Supported models
 
