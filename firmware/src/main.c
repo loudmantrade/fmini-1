@@ -343,6 +343,9 @@ static void fm1_main(void)
         master_poll();
     }
     kb_boot_hold = 0;
+#if BOARD_SMK37
+    sus_boot();                                /* PEDAL POLARITY from the pedal's state at power-on (seq.c) */
+#endif
     lcd_fill(0, 0, 240, 240, T_BG);
     scrn.idle = fm1_ms;                        /* (MENU > SCREEN OFF: from here) */
 

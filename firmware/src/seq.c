@@ -764,6 +764,19 @@ static void sus_poll(void)
     }
 #endif
 }
+/* at power-on, after the splash (the pedal's read has settled): a pedal that reads pressed (raw low, as NORMAL's
+ * "pressed") is normally closed, so REVERSE; a pedal that reads open (raw high) is NORMAL; in between the saved choice stays */
+void sus_boot(void)
+{
+#if BOARD_SMK37
+    uint32_t raw = fm1_in.pedal;
+    if (raw < 300u)
+        sus_rev = 1u;
+    else if (raw > 700u)
+        sus_rev = 0u;
+    sus_down = 0;
+#endif
+}
 
 /* key k plays kb_note[k] on track t: its chord (chord.c; the note alone with CHRD OFF). A note another key
  * holds already sounds: it is not started again (nor sent to MIDI OUT); the key keeps its notes */
