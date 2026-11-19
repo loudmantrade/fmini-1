@@ -1052,6 +1052,18 @@ static uint32_t fa_sound_keys(void)
 #define FA_NPG 47u                                        /* the controls of the seven screens (FMG_PAGE: 8+8+9+6+4+4+8; CTRL's VOICES has no CC) */
 #define FA_NCC (FA_NPG + FA_AR_N)                         /* .. and the ARP pop-up's six lines */
 static uint8_t fa_gl;                                     /* 0 closed, 1 the list, 2 MIDI CC, 3 ABOUT */
+#if BOARD_SMK37
+#define FA_GL_N 8u                                        /* GLOBAL's rows: the SMK-37 has PEDAL POLARITY (4) before FACTORY RESET */
+#define FA_GL_PED 4u
+#define FA_GL_FR 5u
+#define FA_GL_SUP 6u
+#define FA_GL_ABT 7u
+#else
+#define FA_GL_N 7u
+#define FA_GL_FR 4u
+#define FA_GL_SUP 5u
+#define FA_GL_ABT 6u
+#endif
 static uint8_t fa_gl_row;                                 /* GLOBAL (fa_gl 1): 0 MIDI SETTINGS, 1 TUNING, 2 TRANSPOSE, 3 NOTE PRIORITY,
                                                            * 4 FACTORY RESET (fa_gl 8: its question), 5 SUPPORT, 6 ABOUT;
                                                            * MIDI SETTINGS (fa_gl 4): 0 MIDI IN, 1 CHANNEL, 2 MIDI CC, 3 CLOCK;
@@ -1113,6 +1125,7 @@ static void fa_cfg_defaults(void)                         /* GLOBAL's settings a
     fm_bt = 0;
     fa_clk = 0;
     glo_note_prio = 0;                      /* LAST: the default (2.6.3) */
+    sus_rev = 0;                            /* PEDAL POLARITY: NORMAL */
     fa_tune_hz = 440;
     glo_tune_c = 0;
     glo_transpose = 0;
@@ -1142,6 +1155,11 @@ static void fa_cfg_load(void)
             smk_out_ch = (uint8_t)(oc <= 15u ? oc : 0u);
         }
         fm_midi_src = 0;                                    /* MIDI IN: USB, always */
+#endif
+#if BOARD_SMK37
+        {   uint32_t pb = *fa_cfg_byte(24u + FA_NCC);   /* PEDAL POLARITY: 0xE0 | 0 NORMAL, 1 REVERSE; erased (0xFF): NORMAL */
+            sus_rev = (pb & 0xFEu) == 0xE0u ? (uint8_t)(pb & 1u) : 0u;
+        }
 #endif
         {   uint32_t tb = *fa_cfg_byte(18u + FA_NCC), tr = *fa_cfg_byte(19u + FA_NCC);   /* TUNING 410 + v Hz, TRANSPOSE v - 12; erased (0xFF): 440, 0 */
             fa_tune_hz = (uint16_t)(tb <= 60u ? 410u + tb : 440u);
@@ -1179,6 +1197,7 @@ static void fa_cfg_save(void)
 #if BOARD_SMK37
     *fa_cfg_byte(21u + FA_NCC) = (uint8_t)(0x80u | smk_out_mode);
     *fa_cfg_byte(22u + FA_NCC) = smk_out_ch;
+    *fa_cfg_byte(24u + FA_NCC) = (uint8_t)(0xE0u | sus_rev);
 #endif
     {
         static const uint8_t GID[4] = {G_RSIZE, G_DRREV, G_CRATE, G_DRLVL};
@@ -1578,9 +1597,12 @@ static void fa_gl_dialog(void)
             fa_line(96, "TRANSPOSE", tr, fa_gl_row == 2u);
         }
         fa_line(113, "NOTE PRIORITY", glo_note_prio == 2u ? "HIGH" : glo_note_prio == 0u ? "LAST" : "LOW", fa_gl_row == 3u);
-        fa_line(130, "FACTORY RESET", ">", fa_gl_row == 4u);
-        fa_line(147, "SUPPORT FMINI-1", ">", fa_gl_row == 5u);
-        fa_line(164, "ABOUT", ">", fa_gl_row == 6u);
+#if BOARD_SMK37
+        fa_line(62 + 17 * FA_GL_PED, "PEDAL POLARITY", sus_rev ? "REVERSE" : "NORMAL", fa_gl_row == FA_GL_PED);
+#endif
+        fa_line(62 + 17 * FA_GL_FR, "FACTORY RESET", ">", fa_gl_row == FA_GL_FR);
+        fa_line(62 + 17 * FA_GL_SUP, "SUPPORT FMINI-1", ">", fa_gl_row == FA_GL_SUP);
+        fa_line(62 + 17 * FA_GL_ABT, "ABOUT", ">", fa_gl_row == FA_GL_ABT);
         fa_ctext(120, 199, &AF_S, FA_SEL "  " FA_ALG "  " FA_GLO "=BACK", FA_MU);
     } else if (fa_gl == 4u) {                             /* MIDI SETTINGS: the MIDI options, one folder down */
         fa_frame("MIDI SETTINGS");
@@ -2334,7 +2356,7 @@ static void fa_buttons(uint32_t pressed)
     uint32_t i;
     if (fa_gl == 6u && pressed) {                         /* SUPPORT: any key goes back to GLOBAL */
         fa_gl = 1u;
-        fa_gl_row = 5u;
+        fa_gl_row = FA_GL_SUP;
         return;
     }
     if (fa_gl == 8u && pressed) {                         /* FACTORY RESET's question: SAVE on YES resets, on NO goes back;
@@ -2345,7 +2367,7 @@ static void fa_buttons(uint32_t pressed)
             return;
         }
         fa_gl = 1u;
-        fa_gl_row = 4u;
+        fa_gl_row = FA_GL_FR;
         return;
     }
     if (fa_gl == 5u && pressed) {                         /* MIDI MONITOR: any key goes back to MIDI SETTINGS, and does nothing else */
@@ -2380,7 +2402,7 @@ static void fa_buttons(uint32_t pressed)
                 fa_sc = 0;
                 fa_sq = 0;
                 fa_sq_rec = 0;
-                fa_gl_row = 6u;                            /* (ABOUT's row) */
+                fa_gl_row = FA_GL_ABT;                     /* (ABOUT's row) */
                 fa_gl = 3u;
             }
         }
@@ -2397,7 +2419,7 @@ static void fa_buttons(uint32_t pressed)
         } else if (fa_gl == 2u)
             fa_gl = 4u;                                    /* MIDI CC -> MIDI SETTINGS (its row kept) */
         else if (fa_gl == 4u || fa_gl == 3u) {             /* MIDI SETTINGS / ABOUT -> GLOBAL */
-            fa_gl_row = fa_gl == 3u ? 6u : 0u;
+            fa_gl_row = fa_gl == 3u ? FA_GL_ABT : 0u;
             fa_gl = 1;
         } else
             fa_gl_close();
@@ -2876,7 +2898,7 @@ static void fa_input(void)
         (void)panel_enc(EN_SELECT);
         if (panel_enc(EN_ALGO) != 0) {
             fa_gl = 1u;
-            fa_gl_row = 5u;
+            fa_gl_row = FA_GL_SUP;
         }
         return;
     }
@@ -2910,7 +2932,7 @@ static void fa_input(void)
         if (fa_gl == 1u) {                                /* GLOBAL: MIDI SETTINGS, TUNING, TRANSPOSE, NOTE PRIORITY, FACTORY RESET,
                                                            * SUPPORT, ABOUT */
             if ((s = panel_enc(EN_SELECT)) != 0)
-                fa_gl_row = (uint8_t)((fa_gl_row + 7u + (s > 0 ? 1u : 6u)) % 7u);
+                fa_gl_row = (uint8_t)((fa_gl_row + FA_GL_N + (s > 0 ? 1u : FA_GL_N - 1u)) % FA_GL_N);
             if ((s = panel_enc(EN_ALGO)) != 0) {
                 if (fa_gl_row == 0u) {
                     fa_gl = 4u;                            /* MIDI SETTINGS: its first line */
@@ -2930,10 +2952,15 @@ static void fa_input(void)
                     glo_note_prio = NP[k2];
                     panic_req |= 1u;                       /* the note sounding may change: none may hang */
                     fa_cfg_dirty = 1;
-                } else if (fa_gl_row == 4u) {
+#if BOARD_SMK37
+                } else if (fa_gl_row == FA_GL_PED) {         /* PEDAL POLARITY: NORMAL, REVERSE */
+                    sus_rev ^= 1u;
+                    fa_cfg_dirty = 1;
+#endif
+                } else if (fa_gl_row == FA_GL_FR) {
                     fa_gl = 8u;                            /* FACTORY RESET: its question, NO first */
                     fa_fr_yes = 0;
-                } else if (fa_gl_row == 5u)
+                } else if (fa_gl_row == FA_GL_SUP)
                     fa_gl = 6u;                            /* SUPPORT: the QR code screen */
                 else
                     fa_gl = 3u;                            /* ABOUT */

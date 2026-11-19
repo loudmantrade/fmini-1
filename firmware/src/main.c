@@ -442,6 +442,7 @@ static void fm1_main(void)
 #if BOARD_SMK37
         smk_faders();
         smk_wheels();
+        sus_poll();                                     /* the sustain pedal's jack (seq.c) */
         padled_flush();                                 /* the pads' colours, between LCD transfers */
 #endif
         UI_DRAW();

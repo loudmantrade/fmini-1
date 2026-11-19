@@ -627,8 +627,10 @@ static __attribute__((noinline)) void cin_keep(track_t *t, uint32_t note, uint32
 #if FELUCCA_FMINI_ONLY
 static void fa_seq_note(track_t *t, uint32_t note);      /* fmini_app.c: the SEQ pop-up's step recording */
 #endif
+static void sus_clr(uint32_t i, uint32_t x);      /* (the sustain pedal, below) */
 static void input_on(track_t *t, uint32_t note, uint32_t vel)
 {
+    sus_clr(trk_index(t), note);                    /* a key down again: the note is struck, not kept */
 #if FELUCCA_FMINI_ONLY
     fa_seq_note(t, note);
 #endif
@@ -727,6 +729,42 @@ static uint32_t key_vel(uint32_t k)
 #define key_vel(k) ((uint32_t)kb_vel)               /* the FM-1's keys: SELECT VEL */
 #endif
 
+/* SUSTAIN PEDAL (SMK-37, the foot switch on the pedal jack; GLOBAL > PEDAL POLARITY): while it is down, a key's note-offs
+ * (the track's and MIDI OUT's) wait; they happen when it comes up. Only the physical pedal: the MIDI sustain (CC64) is
+ * midi_control's. sus_rev: 0 NORMAL (normally open: pressed when the input reads low), 1 REVERSE (normally closed). */
+uint8_t sus_rev;
+static uint8_t sus_down;
+static uint8_t sus_pend[NTRK][16];                  /* the notes whose key is up while the pedal is down: a bit per note */
+static void sus_set(uint32_t i, uint32_t x) { sus_pend[i][x >> 3] |= (uint8_t)(1u << (x & 7u)); }
+static void sus_clr(uint32_t i, uint32_t x) { sus_pend[i][x >> 3] &= (uint8_t)~(1u << (x & 7u)); }
+static void sus_release(void)                        /* the pedal is up: the notes it held let go, unless a key holds them */
+{
+    uint32_t i, x;
+    for (i = 0; i < NTRK; i++)
+        for (x = 0; x < 128u; x++)
+            if (sus_pend[i][x >> 3] & (1u << (x & 7u))) {
+                sus_clr(i, x);
+                if (!midi_local_held(&trk[i], x)) {
+                    input_off(&trk[i], x);
+                    midi_out_event(0x08u | (0x80u | trk_midi_ch(i)) << 8 | x << 16);
+                }
+            }
+}
+/* called every pass of the main loop: reads the pedal jack (smk_input.h's raw 0..1023, hysteresis 300 / 700) */
+static void sus_poll(void)
+{
+#if BOARD_SMK37
+    uint32_t raw = fm1_in.pedal;
+    if (!sus_down) {
+        if (sus_rev ? raw > 700u : raw < 300u)
+            sus_down = 1;
+    } else if (sus_rev ? raw < 300u : raw > 700u) {
+        sus_down = 0;
+        sus_release();
+    }
+#endif
+}
+
 /* key k plays kb_note[k] on track t: its chord (chord.c; the note alone with CHRD OFF). A note another key
  * holds already sounds: it is not started again (nor sent to MIDI OUT); the key keeps its notes */
 static void key_on(uint32_t k, track_t *t)
@@ -755,6 +793,10 @@ static void key_off(uint32_t k, track_t *t)
         uint32_t x = kb_chord[k][i];
         if (midi_local_held(t, x))
             continue;
+        if (sus_down) {                             /* the pedal holds it: released when the pedal comes up */
+            sus_set(trk_index(t), x);
+            continue;
+        }
         input_off(t, x);
         midi_out_event(0x08u | (0x80u | mc) << 8 | x << 16);
     }
