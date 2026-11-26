@@ -178,9 +178,12 @@ static uint32_t kb_map(const track_t *t, uint32_t k)
 /* ------------------------------------------------------------- arp --- */
 static void arp_add(track_t *t, uint32_t note)
 {
-    uint32_t i, k = in_key - 1u;
-    if (t->p[P_AHOLD] && t->arp_phys == 0u)
-        t->nheld = 0;                               /* new chord replaces the latched one */
+    uint32_t i, k = in_key - 1u, hold_replace = 0u;
+    if (t->p[P_AHOLD] && t->arp_phys == 0u) {
+        hold_replace = t->nheld != 0u;
+        if (hold_replace)
+            t->nheld = 0;                           /* a running latched chord is replaced */
+    }
     t->arp_phys++;                                  /* every key-down: arp_remove counts every key-up */
     for (i = 0; i < t->nheld; i++)
         if (t->held[i] == note)
@@ -195,8 +198,8 @@ static void arp_add(track_t *t, uint32_t note)
         held_dt[trk_index(t)][t->nheld] = (int8_t)(hk[t->nheld] ? (int32_t)note - kb_note[k] : 0);
         t->held[t->nheld++] = (uint8_t)note;
     }
-    if (t->nheld == 1u) {
-        t->arp_pos = 0xFFFFFFF;                     /* fire on this block */
+    if (t->nheld == 1u && (!t->p[P_AHOLD] || !hold_replace)) {
+        t->arp_pos = 0xFFFFFFF;                     /* fire on this block (non-Hold initial launch) */
         t->arp_idx = 0xFFFFFFFFu;
     }
 }
