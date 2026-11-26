@@ -835,10 +835,57 @@ static int auto_list(void)
     ui_prefs &= ~PREF_LARGE;
     return bad;
 }
+static int arp_hold_phase_test(void)
+{
+    int bad = 0;
+    track_t *t;
+    uint32_t period, pos, idx;
+    ui_power_on();
+    t = &trk[0];
+    t->p[P_AMODE] = AM_UP;
+    t->p[P_AHOLD] = 1;
+    t->p[P_ARATE] = 2;
+    t->p[P_AOCT] = 1;
+    t->p[P_APROB] = 127;
+    t->p[P_ASWING] = 0;
+    arp_fresh(t, AM_UP, 1, (const uint8_t[]){60, 64, 67}, 3);
+    period = div_samples(2);
+    pos = period > 2u * CTL ? period - 2u * CTL : 0u;
+    idx = 0xFFFFFFFFu;
+    t->arp_pos = pos;
+    t->arp_idx = idx;
+    arp_remove(t, 60); arp_remove(t, 64); arp_remove(t, 67);
+    arp_add(t, 65); arp_add(t, 69);
+    bad += check("ARP HOLD: a new chord keeps arp_pos and arp_idx until the next step",
+                 t->arp_pos == pos && t->arp_idx == idx && t->nheld == 2u);
+    t->arp_note = 0;
+    arp_tick(t, CTL);
+    bad += check("ARP HOLD: replacing at 286 ms fires nothing before 375 ms",
+                 t->arp_note == 0);
+    t->arp_pos = period - CTL;
+    arp_fire(t, period);
+    bad += check("ARP HOLD: F A replaces C E G at the existing 375 ms boundary",
+                 t->arp_note == 65u);
+    arp_remove(t, 65); arp_remove(t, 69);
+    arp_add(t, 62);
+    t->arp_idx = 0xFFFFFFFFu;
+    arp_fire(t, period);
+    bad += check("ARP HOLD: repeated replacement keeps running phase and uses D only",
+                 t->arp_note == 62u);
+    arp_remove(t, 62);
+    bad += check("ARP HOLD: all-key release keeps the latched pool until a new note", t->nheld == 1u);
+    t->p[P_AHOLD] = 0;
+    arp_remove(t, 62);
+    arp_tick(t, CTL);
+    bad += check("ARP HOLD off: the old latched pool releases without stuck notes",
+                 t->nheld == 0u && !t->arp_note);
+    return bad;
+}
 int main(void)
 {
     int bad = motion_recording() + motion_capacity() + probability_playback() + compact_project() + fun7_89() + loads_and_song() + repeat_mode();
     bad += arp_new_modes();
     bad += lock_playback() + lock_edit() + lock_project() + lock_ui() + lock_undo() + auto_list();
+    bad += arp_hold_phase_test();
     printf("%s\n", bad ? "MOTION TEST FAILED" : "motion/chance/compact storage tests passed"); return bad != 0;
 }
