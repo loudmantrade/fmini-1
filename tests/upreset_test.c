@@ -139,6 +139,28 @@ int main(void)
     up_rec(17)->ver = UP_VER_GRID;
     bad += check("a version 3 record (a drum grid) is used", up_used(17));
 
+    /* A dotted ARP RATE is a normal append-only track enum value in user presets. */
+    {
+        uint32_t name_end, raw;
+        n = put_frame(a, 18, 14u, "Dotted", 0);       /* FMINI's append-only engine id */
+        name_end = 2u + (uint32_t)strlen("Dotted") + 1u;
+        raw = 8192u + 15u;
+        a[name_end + 2u * P_ARATE] = (uint8_t)(raw & 127u);
+        a[name_end + 2u * P_ARATE + 1u] = (uint8_t)(raw >> 7);
+        ok = up_parse(a, n, &r, &slot) == 0 && slot == 18u;
+        ok &= up_value(&r, P_ARATE) == 15;
+        up_bank[1].magic = UP_BANK_MAGIC;
+        up_bank[1].rsize = sizeof(up_rec_t);
+        up_bank[1].nslot = UP_PER_BANK;
+        *up_rec(18) = r;
+        ok &= st_save(OBJ_UPRESET0 + 1u, &up_bank[1], sizeof up_bank[1]) == 0;
+        memset(&up_bank[1], 0, sizeof up_bank[1]);
+        up_bank_check(1, st_load(OBJ_UPRESET0 + 1u, &up_bank[1], sizeof up_bank[1]));
+        got = *up_rec(18);
+        ok &= up_used(18) && up_value(&got, P_ARATE) == 15;
+        bad += check("UP preset: dotted ARP RATE id 15 survives record packing and bank flash round trip", ok);
+    }
+
     /* a drum grid by UP_PUT: kind 1, then bit 7 of each step's hits (bit 0) and accents (bit 1) */
     {
         uint8_t g[640];

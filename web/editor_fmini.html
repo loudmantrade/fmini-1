@@ -263,14 +263,14 @@ const FG = { R1: 0, R2: 1, R3: 2, W1: 3, W2: 4, W3: 5, F2: 6, F3: 7, L1: 8, L2: 
 const FS = { O1: 1, O2: 2, O3: 4, NZ: 8, PINK: 16, MOSC: 32, MFLT: 64 }, FT = { GLIDE: 1, SQR: 2 };
 /* track parameters (core.h; all but E0..E7 are fixed ids) and globals */
 const P = { LEVEL: 0, ATK: 1, DEC: 2, SUS: 3, REL: 4, LRATE: 9, AMODE: 17, ARATE: 18, AOCT: 19, AGATE: 20, DIST: 33, CHOR: 34, DLY: 35, REV: 36, VOICE: 37, GLIDE: 38 };
-const G = { BPM: 0, DTIME: 4, DFDBK: 5, RSIZE: 8, RDAMP: 9, CRATE: 10, CDEPTH: 11, MIDI: 12, INFO: 15, ENGGO: 21, RTYPE: 24, DRLVL: 25, DRREV: 26 };
+const G = { BPM: 0, CLOCK: 2, DTIME: 4, DFDBK: 5, RSIZE: 8, RDAMP: 9, CRATE: 10, CDEPTH: 11, MIDI: 12, INFO: 15, ENGGO: 21, RTYPE: 24, DRLVL: 25, DRREV: 26 };
 
 const v14 = (n) => { n = Math.max(-8192, Math.min(8191, Math.round(n))) + 8192; return [n & 127, n >> 7]; };
 const rv = (a, i) => (a[i] | (a[i + 1] << 7)) - 8192;
 const cstr = (a, i) => { let s = ""; while (i < a.length && a[i]) s += String.fromCharCode(a[i++]); return [s, i + 1]; };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /* the newest firmware this page knows: keep it equal to FMINI_VER_MAJ/MIN/PATCH in firmware/src/core.h (the device reports its own, tag 0x49) */
-const FW_LATEST = [2, 6, 7], FW_LATEST_TXT = "2.6.7";
+const FW_LATEST = [2, 6, 8], FW_LATEST_TXT = "2.6.8";
 
 const dev = { access: null, inp: null, out: null, waiter: null, chain: Promise.resolve(), open: false };
 
@@ -344,12 +344,57 @@ const PAGES = [
     { t: "Chorus", c: [ { k: "par", p: P.CHOR, lb: "MIX" }, { k: "sel", g: G.ENGGO, lb: "TYPE" }, { k: "glb", g: G.CDEPTH, lb: "DEPTH" }, { k: "glb", g: G.CRATE, lb: "RATE" } ] },
     { t: "Drive", c: [ { k: "par", p: P.DIST, lb: "GAIN" }, { k: "sel", g: G.INFO, lb: "TYPE" }, { k: "glb", g: G.DRLVL, lb: "TONE" }, { k: "glb", g: G.MIDI, lb: "OUTPUT" } ] } ] },
   { id: "ARP", groups: [
-    { t: "Arpeggiator", c: [ { k: "sel", p: P.AMODE, lb: "MODE" }, { k: "par", p: P.ARATE, lb: "RATE" }, { k: "par", p: P.AOCT, lb: "OCTAVES" }, { k: "par", p: P.AGATE, lb: "GATE" }, { k: "glb", g: G.BPM, lb: "BPM" } ] } ] },
+    { t: "Arpeggiator", c: [ { k: "sel", p: P.AMODE, lb: "MODE" }, { k: "sel", p: P.ARATE, lb: "RATE" }, { k: "par", p: P.AOCT, lb: "OCTAVES" }, { k: "par", p: P.AGATE, lb: "GATE" }, { k: "glb", g: G.BPM, lb: "BPM" } ] } ] },
   { id: "LIB", lib: true, groups: [] },
 ];
 
 const pid = (c) => (c.pe !== undefined ? S.pe0 + c.pe : c.p);
-const descOf = (c) => (c.g !== undefined ? S.desc["1:" + c.g] : S.desc["0:" + pid(c)]) || { min: 0, max: 127, def: 0, names: null, fmt: 0 };
+const isAsyncTime = (c) => c.g === G.DRREV && S.g[G.DTIME] === 7;
+const descOf = (c) => (isAsyncTime(c) ? S.desc["0:" + P.ARATE] : c.g !== undefined ? S.desc["1:" + c.g] : S.desc["0:" + pid(c)]) || { min: 0, max: 127, def: 0, names: null, fmt: 0 };
+function arpDivSamplesQ8(div) {
+  const bpm = Math.max(1, S.g[G.BPM] || 120), quarter = Math.floor(44100 * 60 / bpm);
+  if (div === 0) return quarter * 256;
+  if (div === 1) return Math.floor(quarter / 2) * 256;
+  if (div === 2) return Math.floor(quarter / 4) * 256;
+  if (div === 3) return Math.floor(quarter / 8) * 256;
+  if (div === 4) return Math.floor(quarter / 3) * 256;
+  if (div === 5) return Math.floor(quarter / 6) * 256;
+  if (div === 6) return quarter * 2 * 256;
+  if (div === 7) return quarter * 4 * 256;
+  if (div === 8) return quarter * 8 * 256;
+  if (div === 9) return quarter * 16 * 256;
+  if (div === 10) return Math.floor(quarter * 4 / 3) * 256;
+  if (div === 11) return Math.floor(quarter * 2 / 3) * 256;
+  if (div === 12) return quarter * 384;
+  if (div === 13) return quarter * 192;
+  if (div === 14) return quarter * 96;
+  if (div === 15) return quarter * 48;
+  if (div === 16) return quarter * 1536;
+  if (div === 17) return quarter * 768;
+  return 0xFFFFFFFF;
+}
+const asyncTimeFits = (div) => S.g[G.CLOCK] ? true : arpDivSamplesQ8(div) < 65536 * 256;
+const delayMs = (v) => 10 + Math.trunc(v * v * 1390 / 16129);
+function delayTimeConvert(toAsync, value) {
+  if (toAsync) {
+    const want = Math.trunc(delayMs(value) * 44100 * 256 / 1000);
+    const maxDiv = Math.min(17, S.desc["0:" + P.ARATE].max);
+    let best = 0, bestDistance = Infinity;
+    for (let i = 0; i <= maxDiv; i++) {
+      let distance = Math.abs(arpDivSamplesQ8(i) - want);
+      if (!asyncTimeFits(i)) distance += 1000000 * 256;
+      if (distance < bestDistance) { bestDistance = distance; best = i; }
+    }
+    return best;
+  }
+  const wantMs = Math.trunc(arpDivSamplesQ8(value < 18 ? value : 0) * 1000 / (44100 * 256));
+  let best = 0, bestDistance = Infinity;
+  for (let i = 0; i <= 127; i++) {
+    const distance = Math.abs(delayMs(i) - wantMs);
+    if (distance < bestDistance) { bestDistance = distance; best = i; }
+  }
+  return best;
+}
 function getv(c) {
   if (c.k === "byte") return S.patch[c.b];
   if (c.k === "glide") return S.patch[FG.GLID];
@@ -363,7 +408,7 @@ function range(c) {
   const d = descOf(c); return [d.min, d.max];
 }
 const shown = (c, v) => {
-  if (c.k === "sel") { const d = descOf(c); return (d.names && d.names[v]) || String(v); }
+  if (c.k === "sel" || isAsyncTime(c)) { const d = descOf(c); return (d.names && d.names[v]) || String(v); }
   const [lo, hi] = range(c);
   if (c.k === "par" && c.pe === 0 && hi > lo) {                  /* CUTOFF: the Minimoog's dial, -5 .. +5 */
     const d = ((v - lo) * 10) / (hi - lo) - 5, t = (Math.abs(d) < 0.05 ? 0 : d).toFixed(1);
@@ -398,6 +443,7 @@ function setGlb(id) { return () => req(CMD.SET, [1, id, ...v14(S.g[id])]); }
 function commit(c, v) {
   const [lo, hi] = range(c);
   v = Math.max(lo, Math.min(hi, Math.round(v)));
+  let rebuild = false;
   if (c.oct) { S.oct = v - 3; queue("patch", putPatch()); }
   else if (c.k === "byte" || c.k === "seg") { S.patch[c.b] = v; queue("patch", putPatch()); }
   else if (c.k === "glide") {
@@ -406,9 +452,18 @@ function commit(c, v) {
   } else if (c.k === "sw") {
     S.patch[c.b] = v ? S.patch[c.b] | c.bit : S.patch[c.b] & ~c.bit; queue("patch", putPatch());
     if (c.glide) { S.p[P.GLIDE] = v ? S.patch[FG.GLID] : 0; queue("p" + P.GLIDE, setPar(P.GLIDE)); }
-  } else if (c.g !== undefined) { S.g[c.g] = v; queue("g" + c.g, setGlb(c.g)); }
+  } else if (c.g !== undefined) {
+    if (c.g === G.DTIME && (S.g[G.DTIME] === 7) !== (v === 7)) {
+      S.g[G.DRREV] = delayTimeConvert(v === 7, S.g[G.DRREV]);
+      S.g[G.DTIME] = v;
+      queue("g" + G.DTIME, async () => { await setGlb(G.DTIME)(); await setGlb(G.DRREV)(); });
+      rebuild = true;
+    } else {
+      S.g[c.g] = v; queue("g" + c.g, setGlb(c.g));
+    }
+  }
   else { const id = pid(c); S.p[id] = v; queue("p" + id, setPar(id)); }
-  refreshOne(c);
+  if (rebuild) build(); else refreshOne(c);
 }
 
 /* ------------------------------------------------------------ the widgets --- */
@@ -469,13 +524,18 @@ function mkSel(c) {
   el.innerHTML = `<div class="t"></div><select></select>`; el.querySelector(".t").textContent = c.lb;
   const s = el.querySelector("select"), d = descOf(c);
   const n = d.names ? d.names.length : d.max - d.min + 1;
+  const opts = [];
   for (let i = 0; i < n; i++) {
     const o = document.createElement("option"); o.value = d.min + i; o.textContent = d.names ? d.names[i] : String(d.min + i);
-    o.hidden = !!d.names && NOT_OFFERED.has(d.names[i]);   /* VOICE LEG / UNI: not offered, still shown when a patch has them */
+    opts.push(o);
     s.append(o);
   }
   s.addEventListener("change", () => commit(c, +s.value));
-  return { el, upd: () => { if (document.activeElement !== s) s.value = getv(c); } };
+  return { el, upd: () => {
+    opts.forEach((o, i) => { o.hidden = (!!d.names && NOT_OFFERED.has(d.names[i])) ||
+      (isAsyncTime(c) && !asyncTimeFits(d.min + i) && d.min + i !== getv(c)); });
+    if (document.activeElement !== s) s.value = getv(c);
+  } };
 }
 function build() {
   const panel = document.getElementById("panel"); panel.textContent = ""; ctl.length = 0;
@@ -486,13 +546,13 @@ function build() {
     const row = document.createElement("div"); row.className = "row"; grp.append(row);
     for (const c of g.c) {
       if (c.oct && !S.extras) continue;
-      const w = c.k === "sw" ? mkSwitch(c) : c.k === "seg" ? mkSeg(c) : c.k === "sel" ? mkSel(c) : mkKnob(c);
+      const w = c.k === "sw" ? mkSwitch(c) : c.k === "seg" ? mkSeg(c) : c.k === "sel" || isAsyncTime(c) ? mkSel(c) : mkKnob(c);
       row.append(w.el); ctl.push({ c, el: w.el, upd: w.upd }); w.upd();
     }
     panel.append(grp);
   }
 }
-function refreshOne(c) { for (const x of ctl) if (x.c === c || (x.c.k === "glide" && c.k === "sw")) x.upd(); }
+function refreshOne(c) { for (const x of ctl) if (x.c === c || ((c.g === G.BPM || c.g === G.CLOCK) && isAsyncTime(x.c)) || (x.c.k === "glide" && c.k === "sw")) x.upd(); }
 function refreshAll() {
   ctl.forEach((x) => x.upd());
   const pr = document.getElementById("preset");
@@ -664,6 +724,7 @@ function fillPreset() {
 /* read everything the page shows: DUMP (track 1 and the globals) + the patch */
 async function pull(force) {
   if (!dev.open) return;
+  const wasAsync = S.g[G.DTIME] === 7;
   const d = await req(CMD.DUMP, [], 1500);
   if (d[0] !== S.fmini) { if (force) throw bad("noeng"); return; }
   S.engine = d[0]; S.preset = d[1];
@@ -671,6 +732,7 @@ async function pull(force) {
   S.p = []; S.g = [];
   for (let k = 0; k < pc; k++) S.p.push(rv(d, 2 + 2 * k));
   for (let k = 0; k < gc; k++) S.g.push(rv(d, 2 + 2 * pc + 2 * k));
+  const modeChanged = wasAsync !== (S.g[G.DTIME] === 7);
   S.slot = S.p[S.pe0 + 7];
   if (S.slot < S.names.length && !pending.size) cur = S.slot;
   if (S.canPatch) {
@@ -678,6 +740,7 @@ async function pull(force) {
     if (r[2] === 0) { S.patch = r.slice(3, 3 + FG.SIZE); if (S.extras && r.length > 37) S.oct = r[37] - 4; }   /* (protocol 3: the SLOT is two bytes, r[35..36]) */
   }
   if (force) abReset();
+  if (modeChanged) build();
   refreshAll();
 }
 function startPoll() {

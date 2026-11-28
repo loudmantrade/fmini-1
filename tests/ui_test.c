@@ -7359,8 +7359,8 @@ static int test_div_order(void)
         uint32_t prev = 0xFFFFFFFFu, len;
         for (n = 0; n < 40; n++) v = param_turn(d, v, -1);
         for (n = 0; n <= d->max - d->min; n++) {
-            len = d->names == N_SLDIV ? 1000000u / SL_DEN[v] : d->names == N_DTIME && v >= 10 ? (beat_samples() * 3u) >> DIV_DOT[v - 10] :
-                  div_samples((uint32_t)v);                     /* (TIME's dotted ones, 1.5.1: fx.c delay_samples) */
+            len = d->names == N_SLDIV ? 1000000u / SL_DEN[v] : d->names == N_AR_DIV ? (arp_div_samples_q8((uint32_t)v) + 255u) >> 8 :
+                d->names == N_DTIME && v >= 10 ? (beat_samples() * 3u) >> DIV_DOT[v - 10] : div_samples((uint32_t)v);
             if (!(len < prev && enum_rank(d, v) == d->min + n && !((seen >> v) & 1))) {
                 printf("  %s: %s (value %d, place %d, length %u) after %u\n", d->label, d->names[v], (int)v,
                        (int)enum_rank(d, v), len, prev);
@@ -7373,6 +7373,7 @@ static int test_div_order(void)
         ok &= seen == (1 << (d->max - d->min + 1)) - 1;
     }
     ok &= str_eq(N_DIV[2], "1/16") && str_eq(N_DIV[4], "1/8T") && str_eq(N_DIV[9], "4BAR") && TP[P_SDIV].def == 2;
+    ok &= TP[P_SDIV].max == 11 && TP[P_ARATE].max == 17 && TP[P_ARATE].names == N_AR_DIV && TP[P_ARATE].names != TP[P_SDIV].names;
     ok &= param_turn(&TP[P_SDIV], 2, 1) == 5 && param_turn(&TP[P_SDIV], 2, -1) == 4 &&   /* 1/16: right 16T, left 8T */
           param_turn(&TP[P_SDIV], 3, 1) == 3 && param_turn(&TP[P_SDIV], 9, -1) == 9 &&   /* the ends hold */
           param_turn(&TP[P_SDIV], 2, -6) == 6 && param_turn(&TP[P_SDIV], 2, 40) == 3;    /* 6 left: 1/2; far: clamped */
@@ -7389,9 +7390,9 @@ static int test_div_order(void)
             found++;
             *vp = d->names != N_SLDIV ? 2 : 1;      /* 1/16 */
             turn(EN_K1 + c, 1);
-            ok &= *vp == (d->names != N_SLDIV ? 5 : 4);  /* 16T */
+            ok &= *vp == (d->names == N_AR_DIV ? 15 : d->names != N_SLDIV ? 5 : 4);  /* 1/32D or 16T */
             turn(EN_K1 + c, -2);
-            ok &= *vp == (d->names != N_SLDIV ? 4 : 3);  /* 8T */
+            ok &= *vp == (d->names == N_AR_DIV ? 4 : d->names != N_SLDIV ? 4 : 3);   /* 1/8T */
         }
     ui_power_on();                                  /* SEQ's DIV: SEQ TOOLS' KNOB 2 (1.2: the PATTERN page is gone) */
     go_page(GR_ROLL); frame();

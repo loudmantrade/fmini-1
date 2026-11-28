@@ -169,15 +169,20 @@ ids 83..90, one per lane: 83 KICK, 84 SNARE, 85 CLAP, 86 HATCL, 87 HATOP, 88 TOM
 editor shows them on a DRUM track only (the device's pages). They are the sound's (not the track's): a factory preset
 sets them back to 127, user presets and projects store them (older ones load at 127), motion records them.
 
-Other enums that grew: `P_SDIV` (DIV, id 30) has 10 names (1/4, 1/8, 1/16, 1/32, 8T, 16T, 1/2, 1/1, 2BAR,
-4BAR; the first six keep their numbers), `P_AMODE` (id 17) 15 (OFF, UP, DN, UPDN, RND, ORD, REPEAT, and since 1.2 DNUP, UP+8, CONV, DIVG, PINKY, THUMB, WALK,
-CHORD: values 7..14, appended; an editor that knows only 7 names shows the value by `DESC`'s name) and the
-global `G_CLOCK` (id 2, label "CLK") 3 (INT, USB, TRS). `G_MIDI` (id 12) is an enum of USB / TRS that nothing reads.
-Since 1.5.1 the delay's `G_DTIME` (global id 4, label "TIME") has 13 names: P_SDIV's ten at the same values, then
-1/8D, 1/16D, 1/4D (values 10..12, dotted: 3/4, 3/8, 3/2 of a quarter); `DESC` sends all 13, max 12. P_SDIV, P_ARATE
-and the LFO's SYNC keep their lists. The device's knob steps TIME by length, longest first (4BAR 2BAR 1/1 1/2 1/4D
-1/4 1/8D 1/8 1/16D 8T 1/16 16T 1/32); an editor sorting by the names' lengths reads "n/mD" as 1.5 x n/m. An editor
-that knows only ten names shows 10..12 by `DESC`'s names; a `SET` of 10..12 to a 1.5 device is clamped to 9 (4BAR).
+Other enums that grew: `P_SDIV` (DIV, id 30) retains 12 values: the original 0..9 plus 10 = 1/2T and 11 = 1/4T.
+With dotted-division support, `P_ARATE` (RATE, id 18) has its own enum namespace: values 0..11 keep those same straight/triplet
+meanings, and 12..17 append 1/4D, 1/8D, 1/16D, 1/32D, 1/1D and 1/2D. `DESC` reports the full 18-name list.
+`P_SDIV` and the LFO's SYNC do not gain these dotted ARP values. `P_AMODE` (id 17) remains 15 values (OFF, UP, DN,
+UPDN, RND, ORD, REPEAT, and since 1.2 DNUP, UP+8, CONV, DIVG, PINKY, THUMB, WALK, CHORD: values 7..14, appended).
+The global `G_CLOCK` (id 2, label "CLK") remains INT, USB, TRS. `G_MIDI` (id 12) is an enum of USB / TRS that nothing reads.
+
+For non-FMINI firmware, since 1.5.1 the delay's `G_DTIME` (global id 4, label "TIME") uses the separate `N_DTIME`
+namespace: the original divisions followed by 1/8D, 1/16D, 1/4D at values 10..12. Those legacy meanings are unchanged.
+For FMini-1, `G_DTIME` is the delay TYPE (7 = A-SYNC), and `G_DRREV` is the delay TIME. Outside A-SYNC, `G_DRREV`
+continues to mean milliseconds (0..127). In A-SYNC, it shares the `P_ARATE` division IDs: values 0..11 retain their
+existing meanings; 12..17 select the appended dotted divisions. A-SYNC `DESC` remains an integer global descriptor,
+so clients must use the `P_ARATE` enum names and range when `G_DTIME == 7`, and the millisecond control otherwise.
+The device orders each musical list longest first; the stored IDs remain append-only and are not renumbered.
 Since 1.5.6 (#218) `P_QUANT` (id 27, label "QNT") has 5 names: OFF SNAP WHITE SEQ, then SEQ+T (value 4, appended:
 SEQ, and the sequence's notes moved by TRN before they snap, as the keys are). An editor that knows four names shows 4
 by `DESC`'s name; older firmware clamps a stored or `SET` 4 to 3 (SEQ: the sequence snaps, not transposed).

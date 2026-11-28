@@ -306,6 +306,21 @@ static uint32_t div_samples(uint32_t div)
     return div < 6u ? quarter / DIV_DEN[div] : div < 10u ? quarter << (div - 5u) : div == 10u ? quarter * 4u / 3u
          : div == 11u ? quarter * 2u / 3u : quarter / DIV_DEN[div % 6u];   /* 10: 1/2T, 11: 1/4T (triplets) */
 }
+static uint32_t arp_div_samples_q8(uint32_t div)
+{
+    uint32_t quarter = beat_samples();
+    if (div < 12u)
+        return div_samples(div) << 8;
+    switch (div) {
+    case 12u: return quarter * 384u;   /* 1/4D: 3/2 quarter */
+    case 13u: return quarter * 192u;   /* 1/8D: 3/4 quarter */
+    case 14u: return quarter * 96u;    /* 1/16D: 3/8 quarter */
+    case 15u: return quarter * 48u;    /* 1/32D: 3/16 quarter */
+    case 16u: return quarter * 1536u;  /* 1/1D: 6 quarters */
+    case 17u: return quarter * 768u;   /* 1/2D: 3 quarters */
+    default: return UINT32_MAX;
+    }
+}
 
 #include "perform.c"                                 /* the FX hold layer's effects (the master) */
 #include "click.c"                                   /* the metronome's click (after the master: audio.c) */
@@ -322,17 +337,30 @@ static uint32_t dly_kind(void)
 /* A-SYNC: a note value longer than the delay line (1.48 s) is silent, not cut: the delay does not play (dly_block is skipped) */
 static uint32_t dly_div_fits(uint32_t div)           /* A-SYNC: this note value is shorter than the line (at the tempo now) */
 {
+#if FELUCCA_FMINI_ONLY
+    return arp_div_samples_q8(div) < (DLY_LEN << 8);
+#else
     return div_samples(div) < DLY_LEN;
+#endif
 }
 static uint32_t dly_fits(void)
 {
+#if FELUCCA_FMINI_ONLY
+    return song.g[G_DTIME] != 7 || dly_div_fits((uint32_t)clamp(song.g[G_DRREV], 0, 17));
+#else
     return song.g[G_DTIME] != 7 || dly_div_fits((uint32_t)clamp(song.g[G_DRREV], 0, 11));
+#endif
 }
 static uint32_t delay_samples(void)
 {
-    if (song.g[G_DTIME] == 7) {                          /* A-SYNC: the time in N_DIV's note values (G_DRREV, 0..9), the tempo's */
+    if (song.g[G_DTIME] == 7) {                          /* A-SYNC: the time in N_AR_DIV's note values (G_DRREV, 0..17), the tempo's */
+#if FELUCCA_FMINI_ONLY
+        uint32_t q8 = arp_div_samples_q8((uint32_t)clamp(song.g[G_DRREV], 0, 17));
+        return q8 < (16u << 8) ? 16u : q8 >= (DLY_LEN << 8) ? DLY_LEN - 1u : q8 >> 8;
+#else
         uint32_t s = div_samples((uint32_t)clamp(song.g[G_DRREV], 0, 11));
         return s < 16u ? 16u : s >= DLY_LEN ? DLY_LEN - 1u : s;
+#endif
     }
 #if FELUCCA_FMINI_ONLY
     {   /* FMini-1: the time in ms (FX > TIME) */
@@ -343,6 +371,16 @@ static uint32_t delay_samples(void)
     uint32_t d = (uint32_t)song.g[G_DTIME];
     uint32_t s = d - 10u < 3u ? (beat_samples() * 3u) >> DIV_DOT[d - 10u] : div_samples(d);
     return s < 16u ? 16u : s >= DLY_LEN ? DLY_LEN - 1u : s;
+}
+static uint32_t delay_samples_q8(void)
+{
+#if FELUCCA_FMINI_ONLY
+    if (song.g[G_DTIME] == 7) {
+        uint32_t q8 = arp_div_samples_q8((uint32_t)clamp(song.g[G_DRREV], 0, 17));
+        return q8 < (16u << 8) ? 16u << 8 : q8 >= (DLY_LEN << 8) ? (DLY_LEN - 1u) << 8 : q8;
+    }
+#endif
+    return delay_samples() << 8;
 }
 
 #if FELUCCA_FMINI_ONLY
@@ -1101,7 +1139,7 @@ static inline void dly_put_w(uint32_t w, int32_t v)                     /* the l
 static __attribute__((noinline)) void dly_block(const int32_t *dly_in, int32_t *wet, uint32_t n, int32_t fb)
 {
     uint32_t i, ty = dly_kind(), w = fx.dly_w, st = fx.dly_start, ph = fx.dly_ph, ph2 = fx.dly_ph2;
-    int32_t dmix = song.g[G_DMIX] * 258, tgt = (int32_t)delay_samples() << 8, slew = tgt - fx.dl_q, slap, dl, lp = fx.dly_lp, hp = fx.dly_hp;
+    int32_t dmix = song.g[G_DMIX] * 258, tgt = (int32_t)delay_samples_q8(), slew = tgt - fx.dl_q, slap, dl, lp = fx.dly_lp, hp = fx.dly_hp;
     fx.dl_q += clamp(slew, -2048, 2048);                /* up to 8 samples a block: +-25 % speed: a quick, smooth bend */
     dl = fx.dl_q;
     slap = (1323 << 8) + (((dl >> 6) * 3277) >> 9);     /* SLAP's time, 30 ms + TIME / 10 */
@@ -1215,7 +1253,7 @@ static __attribute__((noinline)) void dly_block(const int32_t *dly_in, int32_t *
 static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t *rev_in, int32_t *wet,
                      uint32_t n)
 {
-    uint32_t i, dl = delay_samples();
+    uint32_t i;
     int32_t fb = song.g[G_DFDBK] * 230, col = 2000 + song.g[G_DCOLOR] * 240;
     int32_t dmix = song.g[G_DMIX] * 258;
     int32_t cdepth = song.g[G_CDEPTH] * 6, rt;
@@ -1248,7 +1286,7 @@ static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t
     if (dly_act && !fx.dly_on) {
         fx.dly_start = fx.dly_w;                         /* what the buffer holds is old: it reads as silence until rewritten */
         fx.dly_lp = fx.dly_hp = 0;
-        fx.dl_q = (int32_t)dl << 8;                      /* (no bend from the last time) */
+        fx.dl_q = (int32_t)delay_samples_q8();            /* (no bend from the last time) */
         fx.rv_n[0] = 0;                                  /* REVERSE: its heads start afresh */
     }
     fx.dly_on = (uint8_t)dly_act;
@@ -1258,6 +1296,7 @@ static void fx_buses(const int32_t *cho_in, const int32_t *dly_in, const int32_t
         fb += mulq16(THR_FB - fb, (uint32_t)pf.ew1 << 1);   /* ECHO THROW (perform.c): more feedback while held, 0.7
                                                              * at most (the loop's gain below 1: it never runs away) */
 #if !FELUCCA_FMINI_ONLY
+    uint32_t dl = delay_samples();
     for (i = 0; i < n; i++) {
         int32_t y = 0, x, r;
         if (cho_act) {

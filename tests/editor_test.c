@@ -479,6 +479,22 @@ static int fmini_patches(void)
     uint8_t a[3 + FG_SIZE];
     uint32_t n, i;
     reset();
+    a[0] = 0; a[1] = P_ARATE;
+    n = request(ED_DESC, a, 2);
+    {
+        uint32_t pos = 14u, j, ok = n > 14u && host_wire[4] == ED_DESC && host_wire[5] == 0u && host_wire[6] == P_ARATE &&
+                       ed_rv(host_wire + 10) == 17;
+        for (j = 0; j < 2u; j++) { while (pos < n && host_wire[pos]) pos++; pos++; }
+        for (j = 0; j < 18u && pos < n; j++) {
+            ok &= !strcmp((const char *)host_wire + pos, N_AR_DIV[j]);
+            while (pos < n && host_wire[pos]) pos++;
+            pos++;
+        }
+        ok &= j == 18u;
+        a[1] = P_SDIV; n = request(ED_DESC, a, 2);
+        ok &= n > 14u && ed_rv(host_wire + 10) == 11 && P_ARATE < P_SDIV;
+        bad += check("DESC: ARP RATE appends dotted ids 12..17; SEQ DIV remains 0..11", ok);
+    }
     a[0] = ED_FMINI_FACTORY; a[1] = 3;
     n = request(ED_FMINI_GET, a, 2);
     bad += check("FMINI_GET factory 4: the 32 bytes", n == 5u + 3u + FG_SIZE + 1u && host_wire[7] == 0 &&

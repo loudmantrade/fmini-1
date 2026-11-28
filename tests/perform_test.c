@@ -32,7 +32,7 @@
  *    others kept; the keys of a remapped layer; a key remapped while held takes its new effect; two keys with one
  *    effect; FX LATCH follows a remap; the default map on the keys.
  * 12. 1.5.1: the delay's TIME 1/8D 1/16D 1/4D (their lengths at 60 61 90 120 BPM and on the external clock, 1/4D clamped
- *    to the line at 60 BPM and below, the list append-only and longest first on the knob, ARP RATE / SEQ DIV unchanged, an
+ *    to the line at 60 BPM and below, the list append-only and longest first on the knob, SEQ DIV IDs unchanged, an
  *    echo at 1/8D where it belongs); REV THROW / ECHO THROW: every track's reverb / delay send as at 127 while held, the
  *    other bus untouched, the glide (11.6 ms, bounded steps) in and out, ECHO THROW's feedback 0 -> 0.7 and one above
  *    left alone, bounded on full-scale squares and dying away, the reverb tail ringing out after the release, idle
@@ -1134,6 +1134,52 @@ static int test_throw(void)
         }
     }
     song.g[G_BPM] = 120;
+    {
+        static const uint16_t Q8[6] = {384u, 192u, 96u, 48u, 1536u, 768u};
+        uint32_t quarter = beat_samples();
+        for (v = 0; v < 6u; v++)
+            ok &= arp_div_samples_q8(12u + v) == quarter * Q8[v];
+        ok &= arp_div_samples_q8(15u) == 4134u * 256u + 96u; /* 1/32D at 120 BPM: 4.5 F8 ticks */
+        bad += check("ARP/A-SYNC dotted divisions: exact Q8 durations, including fractional 1/32D", ok);
+        song.g[G_CLOCK] = 1;
+        midi_beat_samples = 30000u;
+        quarter = beat_samples();
+        for (v = 0; v < 6u; v++)
+            ok &= arp_div_samples_q8(12u + v) == quarter * Q8[v];
+        bad += check("ARP/A-SYNC dotted divisions use the selected external tempo source", ok);
+        midi_beat_samples = 0;
+        song.g[G_CLOCK] = 0;
+    }
+    {
+        int fit_ok;
+        song.g[G_DTIME] = 7;
+        song.g[G_BPM] = 120;
+        song.g[G_DRREV] = 15;                        /* 1/32D */
+        fit_ok = delay_samples_q8() == 4134u * 256u + 96u && dly_fits();
+        bad += check("A-SYNC 1/32D Q8 fits at 120 BPM", fit_ok);
+        song.g[G_BPM] = 61; fit_ok = dly_div_fits(12u);  /* 1/4D: strict fit boundary */
+        bad += check("A-SYNC 1/4D fits at 61 BPM", fit_ok);
+        song.g[G_BPM] = 60; fit_ok = !dly_div_fits(12u);
+        bad += check("A-SYNC 1/4D is rejected at 60 BPM", fit_ok);
+        song.g[G_BPM] = 122; fit_ok = dly_div_fits(17u); /* 1/2D */
+        bad += check("A-SYNC 1/2D fits at 122 BPM", fit_ok);
+        song.g[G_BPM] = 121; fit_ok = !dly_div_fits(17u);
+        bad += check("A-SYNC 1/2D is rejected at 121 BPM", fit_ok);
+        song.g[G_BPM] = 240; fit_ok = !dly_div_fits(16u);
+        bad += check("A-SYNC 1/1D exceeds the delay line at 240 BPM", fit_ok);
+        song.g[G_BPM] = 40;
+        fit_ok = !dly_div_fits(12u) && dly_div_fits(13u) && dly_div_fits(14u) && dly_div_fits(15u);
+        bad += check("A-SYNC dotted divisions fit selectively at 40 BPM", fit_ok);
+        song.g[G_CLOCK] = 1;
+        midi_beat_samples = 30000u;
+        song.g[G_DRREV] = 15;
+        fit_ok = delay_samples_q8() == 30000u * 48u && dly_fits();
+        bad += check("A-SYNC 1/32D Q8 fit uses the external quarter", fit_ok);
+        midi_beat_samples = 0;
+        song.g[G_CLOCK] = 0;
+        song.g[G_BPM] = 120;
+        song.g[G_DTIME] = 0;
+    }
     song.g[G_DTIME] = 10;
     ok &= delay_samples() == 16537u;                   /* 1/8D at 120: 375 ms */
     song.g[G_DTIME] = 11;
@@ -1158,8 +1204,9 @@ static int test_throw(void)
         const param_desc_t *d = &GP[G_DTIME];
         static const uint8_t SHOWN[13] = {9, 8, 7, 6, 12, 0, 10, 1, 11, 4, 2, 5, 3};
         int32_t x = 9;
-        ok = d->max == 12 && d->names[1][0] == '1' && d->names[1][2] == '8' && !d->names[1][3] && d->names[9][0] == '4' &&
-             TP[P_ARATE].max == 11 && TP[P_SDIV].max == 11 && TP[P_ARATE].names == TP[P_SDIV].names;
+           ok = d->max == 12 && d->names[1][0] == '1' && d->names[1][2] == '8' && !d->names[1][3] && d->names[9][0] == '4' &&
+             TP[P_ARATE].max == 17 && TP[P_ARATE].names == N_AR_DIV && TP[P_SDIV].max == 11 && TP[P_SDIV].names == N_DIV &&
+             !strcmp(N_AR_DIV[10], N_DIV[10]) && !strcmp(N_AR_DIV[15], "1/32D") && !strcmp(N_DTIME[10], "1/8D");
         for (v = 0; v < 13u; v++) {
             ok &= x == SHOWN[v];
             x = param_turn(d, x, 1);

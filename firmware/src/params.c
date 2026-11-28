@@ -10,9 +10,13 @@ static const char *const N_LTRIG[] = {"NOTE", "FREE"};
 static const char *const N_LPOL[] = {"BI", "UNI"};
 static const char *const N_AMODE[] = {"OFF", "UP", "DN", "UPDN", "RND", "ORD", "REPEAT",   /* (append-only: seq.c AM_*) */
                                        "DNUP", "UP+8", "CONV", "DIVG", "PINKY", "THUMB", "WALK", "CHORD"};
+/* SEQ and LFO share N_DIV. ARP has its own append-only dotted extension below. */
 static const char *const N_DIV[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "1/16T", "1/2", "1/1", "2BAR", "4BAR", "1/2T", "1/4T"};   /* 10, 11: appended (1.x) */
+/* ARP / FMini-1 A-SYNC: preserve N_DIV ids 0..11, append dotted divisions separately. */
+static const char *const N_AR_DIV[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "1/16T", "1/2", "1/1", "2BAR", "4BAR",
+                                       "1/2T", "1/4T", "1/4D", "1/8D", "1/16D", "1/32D", "1/1D", "1/2D"};
 /* the delay's TIME (G_DTIME): N_DIV's ten (their values kept), then 1.5.1's dotted ones appended (stored values:
- * append-only). A list of its own: ARP RATE, SEQ DIV and LFO SYNC keep N_DIV's ten (fx.c delay_samples) */
+ * append-only). N_DTIME keeps its own legacy dotted ids; ARP RATE uses N_AR_DIV, while SEQ DIV and LFO SYNC keep N_DIV. */
 static const char *const N_DTIME[] = {"1/4", "1/8", "1/16", "1/32", "1/8T", "1/16T", "1/2", "1/1", "2BAR", "4BAR",
                                       "1/8D", "1/16D", "1/4D"};
 static const char *const N_SCALE[] = {"CHR", "MAJ", "MIN", "DOR", "MIX", "PEN", "MPEN", "HARM",
@@ -57,7 +61,7 @@ static const char *const N_DASH[] = {"--"};
 #if FELUCCA_FMINI_ONLY
 /* FMini-1: G_RTYPE's five models (the FX > REVERB > TYPE list; fx.c rev_run runs them) */
 static const char *const N_RTYPE[] = {"ROOM", "HALL", "PLATE", "SPRING", "CLOUD"};
-/* G_DTIME's use. A-SYNC (7, FMini-1 1.x+): ANALOG's algorithm with its TIME in note values (G_DRREV: N_DIV, the ARP RATE's), synced
+/* G_DTIME's use. A-SYNC (7, FMini-1 1.x+): ANALOG's algorithm with its TIME in note values (G_DRREV: N_AR_DIV, the ARP RATE's), synced
  * to the tempo; appended, so the stored values keep their meaning. Shown after ANALOG (DLYTYPE_ORDER) */
 static const char *const N_DLYTYPE[] = {"ANALOG", "DIGITAL", "TAPE", "P-PONG", "MULTI", "SLAP", "REVERSE", "A-SYNC"};
 static const char *const N_CHOTYPE[] = {"STEREO", "JUNO", "MULTI"};                                       /* G_ENGGO's use */
@@ -107,7 +111,7 @@ static const param_desc_t TP[P_COUNT] = {
     [P_LD_SHP] = PD("SHP", F_BIPCT, -64, 63, 0),
     [P_LD_AMP] = PD("AMP", F_PCT, 0, 127, 0),
     [P_AMODE] = PE("MODE", N_AMODE, 0),
-    [P_ARATE] = PE("RATE", N_DIV, 2),
+    [P_ARATE] = PE("RATE", N_AR_DIV, 2),
     [P_AOCT] = PD("OCT", F_INT, 1, 4, 1),
     [P_AGATE] = PD("GATE", F_PCT, 1, 127, 64),
     [P_ASWING] = PD("SWG", F_PCT, 0, 100, 0),
@@ -322,6 +326,7 @@ static int32_t enum_step(const param_desc_t *d, int32_t from, int32_t v)
  * knobs and the gauges; the stored values (N_DIV, N_SLDIV indices: projects, presets, the editor protocol) stay.
  * -> the shown order of d's values (index: position, entry: value), 0 = the values' own order */
 static const uint8_t DIV_ORDER[12] = {9, 8, 7, 6, 10, 0, 11, 1, 4, 2, 5, 3};   /* 4BAR 2BAR 1/1 1/2 1/2T 1/4 1/4T 1/8 1/8T 1/16 1/16T 1/32 */
+static const uint8_t ARP_DIV_ORDER[18] = {9, 8, 16, 7, 17, 6, 12, 10, 0, 13, 11, 1, 14, 4, 2, 15, 5, 3};
 static const uint8_t SLDIV_ORDER[6] = {0, 3, 1, 4, 2, 5};              /* 1/8 8T 1/16 16T 1/32 32T */
 static const uint8_t DTIME_ORDER[13] = {9, 8, 7, 6, 12, 0, 10, 1, 11, 4, 2, 5, 3};   /* 4BAR 2BAR 1/1 1/2 1/4D 1/4 1/8D
                                                                                       * 1/8 1/16D 8T 1/16 16T 1/32 */
@@ -330,7 +335,7 @@ static const uint8_t DLYTYPE_ORDER[8] = {0, 7, 1, 2, 3, 4, 5, 6};   /* ANALOG, A
 #endif
 static const uint8_t *enum_order(const param_desc_t *d)
 {
-    return d->names == N_DIV ? DIV_ORDER : d->names == N_SLDIV ? SLDIV_ORDER : d->names == N_DTIME ? DTIME_ORDER
+    return d->names == N_DIV ? DIV_ORDER : d->names == N_AR_DIV ? ARP_DIV_ORDER : d->names == N_SLDIV ? SLDIV_ORDER : d->names == N_DTIME ? DTIME_ORDER
 #if FELUCCA_FMINI_ONLY
          : d->names == N_DLYTYPE ? DLYTYPE_ORDER
 #endif

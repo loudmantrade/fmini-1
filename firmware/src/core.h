@@ -20,8 +20,8 @@
  * One number for the FM-1 and the SMK-37 builds: one release carries the four packages. */
 #define FMINI_VER_MAJ 2u
 #define FMINI_VER_MIN 6u
-#define FMINI_VER_PATCH 7u
-#define FMINI_VERSION "v2.6.7"
+#define FMINI_VER_PATCH 8u
+#define FMINI_VERSION "v2.6.8"
 extern volatile uint8_t fm_vel_sens;   /* seq.c: the preset's VELOCITY SENS. (2.5.5): 0 OFF, the sound at 127 whatever the
                                          * velocity (MIDI OUT keeps it); 1 ON, the velocity is the loudness (FMini-1) */
 extern volatile uint8_t fm_bend_mode;   /* seq.c: the PITCH BEND range of the preset, 0 +-2, 1 +-12, 2 +2 -12, 3 +2 -24 (FMini-1) */
@@ -332,7 +332,7 @@ typedef struct track {
     uint8_t arp_phys;            /* keys physically held for the arp */
     uint8_t latched;             /* HOLD: keep notes after release */
     /* arp runtime */
-    uint32_t arp_pos;            /* q8 samples into the current arp step */
+    uint32_t arp_pos;            /* Q8 samples into the current ARP step */
     uint32_t arp_idx;
     uint8_t arp_note;            /* sounding arp note, 0 = none */
     uint8_t arp_walk;            /* WALK: the place in the note list it stands on */
