@@ -30,6 +30,10 @@ def fa(cmd, args=()):
     r = fw(cmd, args)
     return r[5:-1] if r else None
 
+def global_value(index):
+    r = fa(2, [1, index])
+    return (r[2] | (r[3] << 7)) - 8192
+
 CUT = [False]                                    # True: a firmware that cuts the NAMES reply at 664 bytes (up to 1.7.1)
 def on_tx(data):
     log.append(list(data))
@@ -179,6 +183,37 @@ with sync_playwright() as pw:
     sel.locator("select").select_option(index=2)
     pg.wait_for_timeout(300)
     r = fa(2, [1, 24]); check("REVERB TYPE select: the global G_RTYPE = 2 (PLATE)", ((r[2] | r[3] << 7) - 8192) == 2)
+
+    # A-SYNC's global TIME reuses the ARP division enum; free-time delay stays in milliseconds.
+    delay_group = pg.locator("section.grp").filter(has_text="Delay")
+    delay_type = delay_group.locator(".sel select").nth(0)
+    old_delay_type, old_delay_time = global_value(4), global_value(26)
+    if old_delay_type != 7:
+        delay_type.select_option("7"); pg.wait_for_timeout(400)
+        time_select = delay_group.locator(".sel select").nth(1)
+        names = time_select.locator("option").all_text_contents()
+        check("A-SYNC TIME becomes a division selector with appended dotted choices",
+              len(names) == 18 and names[12:18] == ["1/4D", "1/8D", "1/16D", "1/32D", "1/1D", "1/2D"])
+        check("editor keeps exact Q8 1/32D and legacy triplet durations",
+              pg.evaluate("arpDivSamplesQ8(15) === 22050 * 48 && arpDivSamplesQ8(4) === Math.floor(22050 / 3) * 256 && arpDivSamplesQ8(10) === Math.floor(22050 * 4 / 3) * 256"))
+        check("free-time conversion respects older firmware's ARP max id",
+              pg.evaluate("(() => { const d = __fmini.S.desc['0:18']; const max = d.max; d.max = 11; const id = delayTimeConvert(true, 127); d.max = max; return id <= 11; })()"))
+        pg.evaluate("window.__fmini.commit({k:'glb', g:0, lb:'BPM'}, 40)")
+        check("A-SYNC hides divisions that exceed the delay line immediately after BPM changes",
+              time_select.locator("option[value='12']").get_attribute("hidden") is not None and
+              time_select.locator("option[value='13']").get_attribute("hidden") is None)
+        pg.evaluate("window.__fmini.commit({k:'glb', g:2, lb:'CLK'}, 1)")
+        check("A-SYNC does not guess fit while an external clock tempo is unknown",
+              time_select.locator("option[value='12']").get_attribute("hidden") is None)
+        pg.evaluate("window.__fmini.commit({k:'glb', g:2, lb:'CLK'}, 0)")
+        pg.evaluate("window.__fmini.commit({k:'glb', g:0, lb:'BPM'}, 120)")
+        time_select.select_option("15"); pg.wait_for_timeout(300)
+        check("A-SYNC TIME sends the dotted 1/32D id 15", global_value(26) == 15)
+        delay_group.locator(".sel select").nth(0).select_option("0"); pg.wait_for_timeout(400)
+        check("free delay TIME returns to its millisecond knob", delay_group.locator(".knob", has_text="TIME").count() == 1)
+        pg.evaluate("(v) => window.__fmini.commit({k:'glb', g:26, lb:'TIME'}, v)", old_delay_time)
+        pg.wait_for_timeout(300)
+        check("TYPE round trip restores the prior free-time value", global_value(26) == old_delay_time)
 
     # presets
     pg.select_option("#preset", "7")

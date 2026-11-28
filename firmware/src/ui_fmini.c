@@ -119,8 +119,7 @@ static void fmg_write(uint32_t b, uint32_t v)
     fmg_commit(p, b);
 }
 static int32_t fmg_acc(uint32_t role, int32_t s, int32_t range);
-/* A-SYNC's TIME: a turn of `steps` over the ARP RATE's order, skipping the note values that do not fit the delay line now
- * (dly_div_fits): only those are shown. A value that fits nowhere (a very slow tempo) stays. */
+/* A-SYNC's TIME: a turn over the ARP RATE order, skipping values that do not fit the delay line now. */
 static int32_t async_turn(int32_t v, int32_t steps)
 {
     const param_desc_t *d = &TP[P_ARATE];
@@ -147,19 +146,23 @@ static int32_t fmg_ratio(const param_desc_t *d, int32_t v)
 static void dly_time_convert(uint32_t to_async)
 {
     uint32_t i, best = 0, cur = (uint32_t)song.g[G_DRREV];
-    int32_t bd = 0x7FFFFFFF, d;
+    uint64_t bd = UINT64_MAX, d;
     if (to_async) {
-        uint32_t want = (uint32_t)dly_ms((int32_t)cur) * (uint32_t)FS / 1000u;
-        for (i = 0; i < 12u; i++) {
-            uint32_t s = div_samples(i);
-            d = (int32_t)(s > want ? s - want : want - s) + (dly_div_fits(i) ? 0 : 1000000);
+        uint64_t want = (uint64_t)(uint32_t)dly_ms((int32_t)cur) * FS * 256u / 1000u;
+        for (i = 0; i < 18u; i++) {
+            uint32_t s = arp_div_samples_q8(i);
+            d = s > want ? s - want : want - s;
+            if (!dly_div_fits(i))
+                d += (uint64_t)1000000u << 8;
             if (d < bd) { bd = d; best = i; }
         }
     } else {
-        int32_t want = (int32_t)(div_samples(cur < 12u ? cur : 0u) * 1000u / (uint32_t)FS);
+        uint32_t id = cur < 18u ? cur : 0u;
+        uint32_t q8 = arp_div_samples_q8(id);
+        uint32_t want = (uint32_t)((uint64_t)q8 * 1000u / ((uint32_t)FS * 256u));
         for (i = 0; i <= 127u; i++) {
-            d = dly_ms((int32_t)i) - want;
-            if (d < 0) d = -d;
+            int32_t delta = dly_ms((int32_t)i) - (int32_t)want;
+            d = (uint32_t)(delta < 0 ? -delta : delta);
             if (d < bd) { bd = d; best = i; }
         }
     }

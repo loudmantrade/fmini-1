@@ -835,22 +835,95 @@ static int auto_list(void)
     ui_prefs &= ~PREF_LARGE;
     return bad;
 }
+static int arp_dotted_phase_test(void)
+{
+    int bad = 0, ok = 1;
+    track_t *t;
+    uint32_t period_q8, elapsed = 0, last_idx, k;
+    ui_power_on();
+    t = &trk[0];
+    t->p[P_AMODE] = AM_UP;
+    t->p[P_AHOLD] = 0;
+    t->p[P_ARATE] = 15;                           /* 1/32D */
+    t->p[P_AOCT] = 1;
+    t->p[P_APROB] = 127;
+    t->p[P_AGATE] = 127;
+    t->p[P_ASWING] = 0;
+    arp_fresh(t, AM_UP, 1, (const uint8_t[]){60}, 1);
+    t->arp_pos = 0xFFFFFFFu;
+    t->arp_idx = 0xFFFFFFFFu;
+    period_q8 = 1058400u;                          /* 22050 samples/quarter * 3/16 * 256, independent reference */
+    arp_tick(t, CTL);                              /* the initial note is immediate */
+    last_idx = t->arp_idx;
+    for (k = 1u; k <= 32u; k++) {
+        uint32_t steps = 0, elapsed_q8;
+        do {
+            arp_tick(t, CTL);
+            elapsed += CTL;
+            steps++;
+        } while (t->arp_idx == last_idx && steps < 200u);
+        ok &= t->arp_idx != last_idx;
+        last_idx = t->arp_idx;
+        elapsed_q8 = (period_q8 * k + ((CTL << 8) - 1u)) / (CTL << 8);
+        ok &= elapsed == elapsed_q8 * CTL;
+        ok &= t->arp_pos < (CTL << 8);              /* block quantization error remains bounded, not cumulative */
+    }
+    bad += check("ARP 1/32D: fractional Q8 phase stays within one block over 32 subdivisions", ok);
+    {
+        uint32_t threshold, old_idx;
+        uint64_t expected_off;
+        t->p[P_ARATE] = 16;                        /* 1/1D: Q8 products exceed 32 bits before division */
+        t->p[P_ASWING] = 100;
+        t->p[P_AGATE] = 127;
+        period_q8 = 33868800u;                     /* 22050 samples/quarter * 6 * 256, independent reference */
+        arp_fresh(t, AM_UP, 1, (const uint8_t[]){60}, 1);
+        t->arp_pos = 0xFFFFFFFu;
+        arp_tick(t, CTL);
+        expected_off = (uint64_t)period_q8 * 127u / 128u;
+        threshold = period_q8 - (uint32_t)((uint64_t)period_q8 * 100u / 250u);
+        ok = t->arp_off == expected_off;
+        t->arp_pos = threshold - CTL * 256u;
+        old_idx = t->arp_idx;
+        arp_tick(t, CTL);
+        ok &= t->arp_idx == old_idx + 1u && t->arp_pos == 0u;
+        bad += check("ARP long division: Q8 gate and swing stay exact without overflow", ok);
+    }
+    {
+        uint32_t legacy_period, legacy_swing, old_idx;
+        t->p[P_ARATE] = 9;
+        t->p[P_ASWING] = 100;
+        t->p[P_AGATE] = 1;
+        legacy_period = div_samples(9u);
+        legacy_swing = 100u * legacy_period / 250u;
+        arp_fresh(t, AM_UP, 1, (const uint8_t[]){60}, 1);
+        t->arp_pos = 0xFFFFFFFu;
+        arp_tick(t, CTL);
+        ok = t->arp_off == (legacy_period * 1u / 128u) * 256u;
+        t->arp_pos = (legacy_period - legacy_swing) * 256u - CTL * 256u + 1u;
+        old_idx = t->arp_idx;
+        arp_tick(t, CTL);
+        ok &= t->arp_idx == old_idx + 1u && t->arp_pos == 0u;
+        bad += check("ARP legacy divisions retain integer gate, swing and phase reset", ok);
+    }
+    return bad;
+}
+
 static int arp_hold_phase_test(void)
 {
     int bad = 0;
     track_t *t;
-    uint32_t period, pos, idx;
+    uint32_t period_q8, pos, idx, old_idx, steps;
     ui_power_on();
     t = &trk[0];
     t->p[P_AMODE] = AM_UP;
     t->p[P_AHOLD] = 1;
-    t->p[P_ARATE] = 2;
+    t->p[P_ARATE] = 13;                          /* 1/8D */
     t->p[P_AOCT] = 1;
     t->p[P_APROB] = 127;
     t->p[P_ASWING] = 0;
     arp_fresh(t, AM_UP, 1, (const uint8_t[]){60, 64, 67}, 3);
-    period = div_samples(2);
-    pos = period > 2u * CTL ? period - 2u * CTL : 0u;
+    period_q8 = arp_div_samples_q8(13u);
+    pos = period_q8 - 2u * CTL * 256u;
     idx = 0xFFFFFFFFu;
     t->arp_pos = pos;
     t->arp_idx = idx;
@@ -860,18 +933,20 @@ static int arp_hold_phase_test(void)
                  t->arp_pos == pos && t->arp_idx == idx && t->nheld == 2u);
     t->arp_note = 0;
     arp_tick(t, CTL);
-    bad += check("ARP HOLD: replacing at 286 ms fires nothing before 375 ms",
+    bad += check("ARP HOLD 1/8D: replacement at 286 ms fires nothing before 375 ms",
                  t->arp_note == 0);
-    t->arp_pos = period - CTL;
-    arp_fire(t, period);
-    bad += check("ARP HOLD: F A replaces C E G at the existing 375 ms boundary",
+    arp_tick(t, CTL);
+    bad += check("ARP HOLD 1/8D: F A replaces C E G at the existing 375 ms boundary",
                  t->arp_note == 65u);
     arp_remove(t, 65); arp_remove(t, 69);
     arp_add(t, 62);
-    t->arp_idx = 0xFFFFFFFFu;
-    arp_fire(t, period);
+    old_idx = t->arp_idx;
+    arp_tick(t, CTL);
+    steps = 0;
+    while (t->arp_idx == old_idx && steps++ < 600u)
+        arp_tick(t, CTL);
     bad += check("ARP HOLD: repeated replacement keeps running phase and uses D only",
-                 t->arp_note == 62u);
+                 t->arp_idx != old_idx && t->arp_note == 62u);
     arp_remove(t, 62);
     bad += check("ARP HOLD: all-key release keeps the latched pool until a new note", t->nheld == 1u);
     t->p[P_AHOLD] = 0;
@@ -885,6 +960,7 @@ int main(void)
 {
     int bad = motion_recording() + motion_capacity() + probability_playback() + compact_project() + fun7_89() + loads_and_song() + repeat_mode();
     bad += arp_new_modes();
+    bad += arp_dotted_phase_test();
     bad += lock_playback() + lock_edit() + lock_project() + lock_ui() + lock_undo() + auto_list();
     bad += arp_hold_phase_test();
     printf("%s\n", bad ? "MOTION TEST FAILED" : "motion/chance/compact storage tests passed"); return bad != 0;

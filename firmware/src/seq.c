@@ -407,9 +407,9 @@ static uint32_t arp_list(const track_t *t, uint32_t *list, uint32_t *cnt)
 
 /* an arp step starts (period: its length): the next note of the list. Not inlined: once a step, kept out of the audio
  * ISR's loop over the tracks (tests/target_budget.py) */
-static __attribute__((noinline)) void arp_fire(track_t *t, uint32_t period)
+static __attribute__((noinline)) void arp_fire(track_t *t, uint32_t period_q8, uint32_t dotted)
 {
-    uint32_t cnt, list[64], len, j;
+    uint32_t cnt, list[64], len, j, gate;
     if (!(len = arp_list(t, list, &cnt))) {        /* (every key silent now: QNT WHITE's black keys) */
         if (t->arp_note)
             arp_off(t);
@@ -420,7 +420,9 @@ static __attribute__((noinline)) void arp_fire(track_t *t, uint32_t period)
     if (t->arp_note)
         arp_off(t);
     if ((uint32_t)(rng() & 127u) <= (uint32_t)t->p[P_APROB]) {
-        t->arp_off = period * (uint32_t)t->p[P_AGATE] / 128u;
+        gate = (uint32_t)t->p[P_AGATE];
+        t->arp_off = dotted ? (period_q8 / 128u) * gate + ((period_q8 % 128u) * gate) / 128u
+                    : ((period_q8 >> 8) * gate / 128u) << 8;
         if (t->p[P_AMODE] == AM_CHORD) {            /* CHORD: the first 4 notes, an octave up each step */
             arp_chord(t, list, cnt);
             return;
@@ -434,26 +436,38 @@ static __attribute__((noinline)) void arp_fire(track_t *t, uint32_t period)
 
 static void arp_step(track_t *t, uint32_t n, uint32_t gate_n)
 {
-    uint32_t period;
-    int32_t sw;
+    uint32_t division, period_q8, n_q8 = n << 8, gate_q8 = gate_n << 8, threshold;
+    int32_t swing_q8;
     if (t->arp_note) {
-        if (t->arp_off <= gate_n)
+        if (t->arp_off <= gate_q8)
             arp_off(t);
         else
-            t->arp_off -= gate_n;
+            t->arp_off -= gate_q8;
     }
     if (!t->p[P_AMODE] || !t->nheld) {
         if (!t->nheld && t->arp_note)
             arp_off(t);
         return;
     }
-    period = div_samples((uint32_t)t->p[P_ARATE]);
-    sw = t->p[P_ASWING] * (int32_t)period / 250;
-    t->arp_pos += n;
-    if (t->arp_pos < period + (uint32_t)((t->arp_idx & 1u) ? sw : -sw) && t->arp_pos != 0xFFFFFFF + n)
+    division = (uint32_t)clamp(t->p[P_ARATE], 0, 17);
+    period_q8 = arp_div_samples_q8(division);
+    swing_q8 = division < 12u ? (t->p[P_ASWING] * (int32_t)(period_q8 >> 8) / 250) << 8
+                              : (int32_t)((period_q8 / 250u) * (uint32_t)t->p[P_ASWING] +
+                                          ((period_q8 % 250u) * (uint32_t)t->p[P_ASWING]) / 250u);
+    if (t->arp_pos == 0xFFFFFFFu) {
+        t->arp_pos = 0;
+        arp_fire(t, period_q8, division >= 12u);
         return;
-    t->arp_pos = 0;
-    arp_fire(t, period);
+    }
+    t->arp_pos += n_q8;
+    threshold = (uint32_t)((int32_t)period_q8 + ((t->arp_idx & 1u) ? swing_q8 : -swing_q8));
+    if (t->arp_pos < threshold)
+        return;
+    if (division < 12u)
+        t->arp_pos = 0;
+    else
+        t->arp_pos -= threshold;
+    arp_fire(t, period_q8, division >= 12u);
 }
 
 static void arp_tick(track_t *t, uint32_t n) { arp_step(t, n, n); }

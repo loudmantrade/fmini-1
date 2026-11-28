@@ -483,12 +483,16 @@ int main(void)
                 f.t[k].engine = ENGI_FMINI;
                 f.t[k].p[P_E7] = (int16_t)(k * 2u);
             }
+            f.t[0].p[P_ARATE] = 15;                  /* appended 1/32D */
+            f.t[1].p[P_ARATE] = 17;                  /* appended 1/2D */
+            f.t[2].p[P_SDIV] = 11;                   /* legacy 1/4T id remains distinct */
             f.sum = proj_sum(&f);
             ok = proj_pack(&st, &f) && proj_import(&c, &st, sizeof st);
             for (k = 0; k < NTRK; k++)
                 ok &= !memcmp(c.fm6[k], f.fm6[k], sizeof f.fm6[k]) && c.t[k].engine == ENGI_FMINI &&
                       c.t[k].p[P_E7] == (int16_t)(k * 2u);
-            bad += check("FMINI: the four patches round trip through the project format (engine, SLOT, bytes)", ok);
+            ok &= c.t[0].p[P_ARATE] == 15 && c.t[1].p[P_ARATE] == 17 && c.t[2].p[P_SDIV] == 11;
+            bad += check("FMINI: project round trip preserves dotted ARP ids and legacy SEQ division ids", ok);
             proj_pack(&st, &a);
         }
         st.raw[PROJ_FM6_OFF + 5] ^= 1u;
